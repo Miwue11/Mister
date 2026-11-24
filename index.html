@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cláusulas Liga Mister</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* VOICE: vestuario de una liga entre amigos: directo, deportivo, sin adornos
+   IDEA: el panel "Cláusula" de Mister, ampliado con una cláusula virtual que todos ven
+   PICTURE: la calculadora de subida con "te quitan" y "se queda en" en grande
+   COLOUR/TYPE: noche azul marino, verde césped, oro de moneda; Barlow Condensed + Barlow
+   LAYOUT: cabecera, pestañas pegajosas, una columna de tarjetas hasta 760px */
+:root{color-scheme:dark;--bg:#0e1120;--panel:#171b2d;--panel2:#1f2439;--line:#2b3152;--ink:#f3f5fb;--mut:#a0a8c2;--ok:#20d38c;--bad:#ff5b78;--gold:#f4c64a}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Barlow,system-ui,sans-serif;overflow-x:clip}
+.wrap{max-width:760px;margin:0 auto;padding:0 max(4vw,14px) 60px}
+header{padding:22px 0 14px;display:flex;gap:12px;align-items:flex-end;justify-content:space-between;flex-wrap:wrap}
+h1{font:700 clamp(32px,7vw,44px)/1.05 "Barlow Condensed",sans-serif;margin:0;text-wrap:balance}
+h1 small{display:block;font:500 15px Barlow;color:var(--mut);margin-top:4px}
+h2{font:700 24px/1.1 "Barlow Condensed",sans-serif;margin:0 0 10px}
+.chip{background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-weight:600;font-size:15px}
+.chip b{color:var(--ok)}
+nav{position:sticky;top:0;z-index:5;background:var(--bg);display:flex;gap:4px;overflow-x:auto;border-bottom:1px solid var(--line);margin:0 calc(-1*max(4vw,14px));padding:0 max(4vw,14px)}
+nav button{flex:none;background:none;border:0;color:var(--mut);font:600 16px Barlow;padding:12px 12px;min-height:46px;border-bottom:3px solid transparent;cursor:pointer}
+nav button.on{color:var(--ink);border-color:var(--ok)}
+.badge{background:var(--bad);color:#fff;border-radius:999px;font-size:12px;padding:1px 7px;margin-left:4px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;margin-top:14px}
+.row{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.pl{padding:12px 0;border-top:1px solid var(--line)}.pl:first-of-type{border-top:0}
+.pn{font-weight:600;font-size:17px}.sub{color:var(--mut);font-size:14px}
+.big{font:700 26px/1 "Barlow Condensed",sans-serif;white-space:nowrap;font-variant-numeric:tabular-nums}
+.tag{font-size:12px;font-weight:600;border-radius:6px;padding:2px 7px;background:var(--panel2);color:var(--mut)}
+.tag.v{background:rgba(32,211,140,.15);color:var(--ok)}.tag.a{background:rgba(244,198,74,.15);color:var(--gold)}
+label{display:block;font-size:14px;color:var(--mut);margin:12px 0 5px;font-weight:500}
+input,select{width:100%;font:16px Barlow;color:var(--ink);background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:11px 12px;min-height:46px}
+input:focus,select:focus,button:focus-visible{outline:2px solid var(--ok);outline-offset:1px}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 12px}
+.btn{background:#fff;color:#0e1120;border:0;border-radius:12px;font:700 16px Barlow;padding:12px 18px;min-height:46px;cursor:pointer}
+.btn.ok{background:var(--ok)}.btn.ghost{background:var(--panel2);color:var(--ink);border:1px solid var(--line)}.btn.bad{background:transparent;color:var(--bad);border:1px solid var(--bad)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.seg{display:grid;grid-template-columns:1fr 1fr;background:var(--panel2);border-radius:12px;padding:4px;gap:4px;margin-top:12px}
+.seg button{border:0;border-radius:9px;background:none;color:var(--mut);font:600 15px Barlow;min-height:42px;cursor:pointer}
+.seg button.on{background:var(--ok);color:#0e1120}
+.res{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;margin-top:16px}
+.res div{background:var(--panel2);border-radius:14px;padding:14px}
+.res .k{font-size:14px;color:var(--mut)}
+.res .n{font:700 clamp(28px,8vw,46px)/1.05 "Barlow Condensed",sans-serif;font-variant-numeric:tabular-nums;white-space:nowrap}
+.res .cost{color:var(--bad)}.res .to{color:var(--ok)}
+.note{font-size:14px;color:var(--mut);margin-top:10px}.warn{color:var(--gold)}.err{color:var(--bad)}
+ol.steps{padding-left:20px;margin:12px 0 0}ol.steps li{margin:6px 0}
+details summary{cursor:pointer;color:var(--mut);margin-top:12px;min-height:30px}
+table{width:100%;border-collapse:collapse;font-size:15px}th,td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left}
+td.r,th.r{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.empty{color:var(--mut);text-align:center;padding:26px 8px}
+#toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:12px;font-weight:600;max-width:92vw;display:none;z-index:9}
+#status{font-size:14px;color:var(--gold);margin-top:8px}
+@media(prefers-reduced-motion:no-preference){.card{animation:in .25s ease-out}@keyframes in{from{opacity:0;transform:translateY(6px)}}}
+@media(max-width:600px){.res{grid-template-columns:1fr}table{font-size:13px}.stack thead{display:none}.stack tr{display:grid;padding-block:10px;border-bottom:1px solid var(--line)}.stack td{display:flow-root;border:0;padding:3px 0;padding-inline-start:8em;text-align:start}.stack td::before{content:attr(data-l);float:inline-start;width:7.5em;margin-inline-start:-8em;color:var(--mut)}.stack td:empty{display:none}}
+</style><script>new MutationObserver(()=>{for(const c of document.querySelectorAll('.stack td:not([data-l])')){let i=0,p=c;while(p=p.previousElementSibling)i+=p.colSpan;c.dataset.l=c.closest('table').rows[0].cells[i]?.textContent||''}}).observe(document,{childList:true,subtree:true})</script></head><body>
+<div class="wrap">
+<header><h1>Cláusulas virtuales<small>Liga Mister · Miguel, Agustín, Jaime, Carlos y David</small></h1><div id="who" class="chip">Conectando…</div></header>
+<div id="status"></div>
+<nav id="tabs"></nav>
+<main id="view"><div class="empty">Cargando la liga…</div></main>
+</div>
+<div id="toast" role="status"></div>
+<script>
+{
+const $=s=>document.querySelector(s);
+const MEMBERS=['Miguel','Agustin','Jaime','Carlos','David'],ADMINS=['Agustin','David'];
+const nm=n=>n==='Agustin'?'Agustín':(n||'?');
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt=n=>Math.round(+n||0).toLocaleString('es-ES');
+const num=s=>{const t=String(s??'').trim(),d=t.replace(/\D/g,'');return d?(t.startsWith('-')?-d:+d):0};
+const eff=p=>Math.max(+p.real||0,+p.virtual||0);
+const isAdmin=n=>ADMINS.includes(n);
+const validators=op=>{let v=ADMINS.filter(a=>a!==op.solicitante&&a!==op.vendedor);return v.length?v:ADMINS.filter(a=>a!==op.solicitante)};
+let db=null,uid=null,canWrite=false;
+const S={players:[],ops:[],members:{},ratio:2.5,tab:'plantillas',ready:0,
+  f:{pid:'',mode:'objetivo',val:'',saldo:'',valor:''},c:{pid:'',saldo:'',valor:''},edit:null};
+const me=()=>MEMBERS.find(m=>uid&&S.members[m]&&S.members[m].uid===uid)||null;
+const toast=m=>{const t=$('#toast');t.textContent=m;t.style.display='block';clearTimeout(toast.h);toast.h=setTimeout(()=>t.style.display='none',3800)};
+const fail=e=>{console.error(e);if(e&&e.code==='permission-denied')toast('Sin permiso para guardar: revisa las reglas de Firestore.');else if(e&&e.code==='resource-exhausted')toast('Se ha superado el límite gratuito de Firebase por hoy.');else toast('No se pudo guardar. Inténtalo de nuevo.')};
+const TABS=[['plantillas','Plantillas'],['subir','Subir cláusula'],['clausulazo','Clausulazo'],['pendientes','Pendientes'],['historial','Historial'],['liga','Liga']];
+const pend=()=>S.ops.filter(o=>o.estado==='pendiente');
+
+function renderTabs(){const n=pend().length;$('#tabs').innerHTML=TABS.map(([k,l])=>`<button data-tab="${k}" class="${S.tab===k?'on':''}">${l}${k==='pendientes'&&n?`<span class="badge">${n}</span>`:''}</button>`).join('')}
+function renderWho(){const m=me();$('#who').innerHTML=m?`Eres <b>${esc(nm(m))}</b>${isAdmin(m)?' · admin':''}`:(canWrite?'Elige quién eres en «Liga»':'Modo lectura')}
+function needMe(){return canWrite&&me()?'':`<div class="card empty">${canWrite?'Primero dile a la app quién eres en la pestaña «Liga».':'Conectando con la liga…'}</div>`}
+const ownerOpts=(sel,all)=>(all?MEMBERS:[me()]).map(m=>`<option value="${m}" ${m===sel?'selected':''}>${esc(nm(m))}</option>`).join('');
+
+function vPlantillas(){
+  const m=me(),can=canWrite&&m;
+  let h='';
+  if(can)h+=`<form class="card" id="addP"><h2>Añadir jugador</h2><div class="grid2"><div><label for="apn">Jugador</label><input id="apn" required autocomplete="off" placeholder="Angeliño"></div><div><label for="apd">Dueño</label><select id="apd">${ownerOpts(m,isAdmin(m))}</select></div></div><label for="apr">Cláusula actual en Mister</label><input id="apr" inputmode="numeric" required placeholder="1.000.000"><div class="btns"><button class="btn ok">Añadir</button></div></form>`;
+  for(const o of MEMBERS){
+    const ps=S.players.filter(p=>p.dueno===o).sort((a,b)=>eff(b)-eff(a));
+    h+=`<section class="card"><div class="row"><h2>${esc(nm(o))} ${isAdmin(o)?'<span class="tag a">admin</span>':''}</h2><span class="sub">${ps.length} jugador${ps.length===1?'':'es'}</span></div>`;
+    if(!ps.length)h+=`<div class="sub">Sin jugadores registrados.</div>`;
+    for(const p of ps){const virt=(+p.virtual||0)>(+p.real||0),mine=can&&(m===o||isAdmin(m));
+      h+=`<div class="pl"><div class="row"><div><div class="pn">${esc(p.nombre)} ${virt?'<span class="tag v">virtual</span>':''}</div><div class="sub">Mister: ${fmt(p.real)}${virt?` · sube ${fmt(p.virtual-p.real)} virtual`:''}</div></div><div class="big">${fmt(eff(p))}</div></div>`;
+      if(mine)h+=S.edit===p.id?`<div class="grid2"><div><label for="er">Nueva cláusula en Mister</label><input id="er" inputmode="numeric" value="${fmt(p.real)}"></div><div><label>&nbsp;</label><div class="btns" style="margin:0"><button class="btn ok" data-act="saveReal" data-id="${esc(p.id)}">Guardar</button><button class="btn ghost" data-act="cancelEdit">×</button></div></div></div><div class="note">Úsalo cuando la subas gratis en Mister o cambie allí. Si la de Mister supera la virtual, manda la de Mister.</div><div class="btns"><button class="btn bad" data-act="delP" data-id="${esc(p.id)}">Quitar jugador</button></div>`:`<div class="btns" style="margin-top:6px"><button class="btn ghost" data-act="edit" data-id="${esc(p.id)}">Actualizar Mister</button></div>`;
+      h+=`</div>`}
+    h+=`</section>`}
+  return h}
+
+function calcSub(){const p=S.players.find(x=>x.id===S.f.pid);if(!p)return null;const from=eff(p),v=num(S.f.val);let cost,to;
+  if(S.f.mode==='pago'){cost=v;to=from+Math.round(v*S.ratio)}else{to=v;cost=Math.max(0,Math.round((v-from)/S.ratio))}
+  const max=(S.f.saldo!==''||S.f.valor!=='')?num(S.f.saldo)+Math.round(num(S.f.valor)*.25):null;
+  return{p,from,cost,to,max,ok:to>from&&cost>0&&(max==null||cost<=max)}}
+function vSubir(){const n=needMe();if(n)return n;const m=me(),ps=S.players.filter(p=>p.dueno===m);
+  if(!ps.length)return `<div class="card empty">No tienes jugadores registrados. Añádelos en «Plantillas».</div>`;
+  if(!ps.some(p=>p.id===S.f.pid))S.f.pid=ps[0].id;
+  const val=validators({solicitante:m}).map(nm).join(' o ');
+  return `<section class="card"><h2>Subir cláusula virtual</h2><label for="sp">Jugador</label><select id="sp" data-f="pid">${ps.map(p=>`<option value="${esc(p.id)}" ${p.id===S.f.pid?'selected':''}>${esc(p.nombre)} · ${fmt(eff(p))}</option>`).join('')}</select>
+  <div class="seg"><button type="button" data-mode="objetivo" class="${S.f.mode==='objetivo'?'on':''}">Cláusula objetivo</button><button type="button" data-mode="pago" class="${S.f.mode==='pago'?'on':''}">Lo que pago</button></div>
+  <label for="sv">${S.f.mode==='pago'?'Dinero que quiero invertir':'Cláusula a la que quiero llegar'}</label><input id="sv" data-f="val" inputmode="numeric" value="${esc(S.f.val)}" placeholder="${S.f.mode==='pago'?'500.000':'3.000.000'}">
+  <div class="res"><div><div class="k">Te quitan</div><div class="n cost" id="rc">0</div></div><div><div class="k">Cláusula final</div><div class="n to" id="rt">—</div></div></div>
+  <div class="note" id="rn"></div>
+  <details ${S.f.saldo||S.f.valor?'open':''}><summary>Comprobar si me llega (saldo + 25% del equipo)</summary><div class="grid2"><div><label for="ss">Saldo actual</label><input id="ss" data-f="saldo" inputmode="numeric" value="${esc(S.f.saldo)}"></div><div><label for="sq">Valor total del equipo</label><input id="sq" data-f="valor" inputmode="numeric" value="${esc(S.f.valor)}"></div></div></details>
+  <div class="btns"><button class="btn ok" id="bs" data-act="reqSub">Pedir validación</button></div><div class="note">Cada 1 € pagado sube ${String(S.ratio).replace('.',',')} € de cláusula, igual que en Mister. Lo valida ${esc(val)} después de quitarte el dinero en Mister.</div></section>`}
+function updSub(){const r=calcSub(),c=$('#rc');if(!c||!r)return;c.textContent=fmt(r.cost);$('#rt').textContent=r.to>r.from?fmt(r.to):'—';
+  let t=`Ahora: ${fmt(r.from)}.`;if(r.to<=r.from&&num(S.f.val))t+=' La cláusula final tiene que ser mayor que la actual.';
+  if(r.max!=null)t+=r.cost<=r.max?` Tu puja máxima es ${fmt(r.max)}: te llega.`:` Tu puja máxima es ${fmt(r.max)}: no te llega.`;
+  const n=$('#rn');n.textContent=t;n.className='note'+(r.max!=null&&r.cost>r.max?' err':'');$('#bs').disabled=!r.ok}
+
+function calcCl(){const p=S.players.find(x=>x.id===S.c.pid);if(!p)return null;const R=+p.real||0,V=eff(p);const max=(S.c.saldo!==''||S.c.valor!=='')?num(S.c.saldo)+Math.round(num(S.c.valor)*.25):null;return{p,R,V,D:V-R,max}}
+function vClausulazo(){const n=needMe();if(n)return n;const m=me(),ps=S.players.filter(p=>p.dueno!==m).sort((a,b)=>a.dueno.localeCompare(b.dueno)||a.nombre.localeCompare(b.nombre));
+  if(!ps.length)return `<div class="card empty">No hay jugadores de rivales registrados.</div>`;
+  if(!ps.some(p=>p.id===S.c.pid))S.c.pid=ps[0].id;const r=calcCl(),val=validators({solicitante:m,vendedor:r.p.dueno}).map(nm).join(' o ');
+  const okMax=r.max==null||r.V<=r.max;
+  return `<section class="card"><h2>Pagar un clausulazo</h2><label for="cp">Jugador rival</label><select id="cp" data-c="pid">${ps.map(p=>`<option value="${esc(p.id)}" ${p.id===S.c.pid?'selected':''}>${esc(p.nombre)} (${esc(nm(p.dueno))}) · ${fmt(eff(p))}</option>`).join('')}</select>
+  <div class="res"><div><div class="k">Pagas en Mister</div><div class="n">${fmt(r.R)}</div></div><div><div class="k">Diferencia virtual</div><div class="n ${r.D>0?'cost':''}">${fmt(r.D)}</div></div></div>
+  <ol class="steps"><li>Haz la oferta de <b>${fmt(r.R)}</b> en Mister por ${esc(r.p.nombre)}: ${esc(nm(r.p.dueno))} no puede rechazarla.</li>${r.D>0?`<li>${esc(val)} te quita <b>${fmt(r.D)}</b> y se lo da a ${esc(nm(r.p.dueno))}.</li>`:'<li>No tiene parte virtual: no hay diferencia que mover.</li>'}<li>En total pagas <b>${fmt(r.V)}</b>, su cláusula virtual.</li></ol>
+  <details ${S.c.saldo||S.c.valor?'open':''}><summary>Comprobar si me llega (saldo + 25% del equipo)</summary><div class="grid2"><div><label for="cs">Saldo actual</label><input id="cs" data-c="saldo" inputmode="numeric" value="${esc(S.c.saldo)}"></div><div><label for="cq">Valor total del equipo</label><input id="cq" data-c="valor" inputmode="numeric" value="${esc(S.c.valor)}"></div></div></details>
+  ${r.max!=null?`<div class="note ${okMax?'':'err'}">Tu puja máxima es ${fmt(r.max)}: ${okMax?'te llega':'no te llega'}.</div>`:''}
+  <div class="btns"><button class="btn ok" data-act="reqCl" ${okMax?'':'disabled'}>Avisar a los admins</button></div></section>`}
+
+function opText(o){return o.tipo==='subida'?`${esc(nm(o.solicitante))} sube a <b>${esc(o.jugador)}</b> de ${fmt(o.desde)} a <b>${fmt(o.hasta)}</b>. Quitarle <b>${fmt(o.coste)}</b>.`
+  :`${esc(nm(o.solicitante))} paga la cláusula de <b>${esc(o.jugador)}</b> a ${esc(nm(o.vendedor))}: ${fmt(o.real)} en Mister${o.diferencia>0?` + <b>${fmt(o.diferencia)}</b> que se le quitan a ${esc(nm(o.solicitante))} y se le dan a ${esc(nm(o.vendedor))}`:''}.`}
+const when=t=>t?new Date(t).toLocaleString('es-ES',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'';
+function vPendientes(){const ps=pend().sort((a,b)=>a.creado-b.creado),m=me();if(!ps.length)return `<div class="card empty">Nada pendiente de validar.</div>`;
+  return ps.map(o=>{const v=validators(o),canV=canWrite&&m&&v.includes(m),mine=canWrite&&m===o.solicitante;
+    return `<section class="card"><div class="row"><span class="tag ${o.tipo==='subida'?'v':'a'}">${o.tipo==='subida'?'Subida':'Clausulazo'}</span><span class="sub">${when(o.creado)}</span></div><p>${opText(o)}</p><div class="sub">Valida: ${esc(v.map(nm).join(' o '))}</div>
+    ${canV&&o.tipo==='clausulazo'?`<label for="nr-${esc(o.id)}">Nueva cláusula del jugador en Mister tras el traspaso</label><input id="nr-${esc(o.id)}" inputmode="numeric" placeholder="La que marque Mister">`:''}
+    <div class="btns">${canV?`<button class="btn ok" data-act="val" data-id="${esc(o.id)}">${o.tipo==='subida'?'Dinero quitado · Validar':'Hecho · Validar'}</button><button class="btn bad" data-act="rej" data-id="${esc(o.id)}">Rechazar</button>`:''}${mine?`<button class="btn ghost" data-act="can" data-id="${esc(o.id)}">Cancelar</button>`:''}</div></section>`}).join('')}
+
+function vHistorial(){const done=S.ops.filter(o=>o.estado!=='pendiente').sort((a,b)=>(b.resuelto||0)-(a.resuelto||0)),ok=done.filter(o=>o.estado==='validada');
+  const t=MEMBERS.map(m=>({m,inv:ok.filter(o=>o.tipo==='subida'&&o.solicitante===m).reduce((s,o)=>s+o.coste,0),pag:ok.filter(o=>o.tipo==='clausulazo'&&o.solicitante===m).reduce((s,o)=>s+o.diferencia,0),cob:ok.filter(o=>o.tipo==='clausulazo'&&o.vendedor===m).reduce((s,o)=>s+o.diferencia,0)}));
+  let h=`<section class="card"><h2>Balance virtual</h2><table class="stack"><thead><tr><th>Mánager</th><th class="r">Invertido en subidas</th><th class="r">Pagado en clausulazos</th><th class="r">Cobrado</th></tr></thead><tbody>${t.map(x=>`<tr><td>${esc(nm(x.m))}</td><td class="r">${fmt(x.inv)}</td><td class="r">${fmt(x.pag)}</td><td class="r">${fmt(x.cob)}</td></tr>`).join('')}</tbody></table><div class="note">Solo cuenta la parte virtual validada por los admins.</div></section>`;
+  h+=`<section class="card"><h2>Movimientos</h2>${done.length?done.slice(0,80).map(o=>`<div class="pl"><div class="row"><span class="tag ${o.estado==='validada'?'v':''}">${o.estado}</span><span class="sub">${when(o.resuelto)}${o.validador?' · '+esc(nm(o.validador)):''}</span></div><div>${opText(o)}</div></div>`).join(''):'<div class="sub">Aún no hay movimientos.</div>'}</section>`;return h}
+
+function vLiga(){const m=me(),adm=canWrite&&isAdmin(m);
+  let h=`<section class="card"><h2>¿Quién eres?</h2>${!uid?'<div class="sub">Conectando…</div>':''}${MEMBERS.map(x=>{const l=S.members[x]&&S.members[x].uid,mine=l&&l===uid;
+    return `<div class="pl row"><div class="pn">${esc(nm(x))} ${isAdmin(x)?'<span class="tag a">admin</span>':''}</div><div>${mine?'<span class="tag v">eres tú</span> <button class="btn ghost" data-act="unlink" data-n="'+x+'">Desvincular</button>':l?(adm?'<button class="btn ghost" data-act="unlink" data-n="'+x+'">Desvincular</button>':'<span class="sub">vinculado</span>'):(canWrite&&uid&&!m?'<button class="btn ok" data-act="claim" data-n="'+x+'">Soy yo</button>':'<span class="sub">libre</span>')}</div></div>`}).join('')}<div class="note">Cada móvil se vincula a un mánager. Si cambias de móvil o navegador, pide a un admin que te desvincule y vuelve a pulsar «Soy yo».</div></section>`;
+  h+=`<section class="card"><h2>Regla de cálculo</h2><div class="sub">Cada 1 € pagado sube la cláusula ${String(S.ratio).replace('.',',')} €. Sale de Mister: pagar 133.333 sube 1.000.000 a 1.333.333.</div>${adm?`<label for="rt2">Euros de cláusula por euro pagado</label><div class="grid2"><input id="rt2" inputmode="decimal" value="${String(S.ratio).replace('.',',')}"><button class="btn ghost" data-act="ratio">Guardar</button></div>`:''}</section>`;return h}
+
+function render(){renderWho();renderTabs();const v={plantillas:vPlantillas,subir:vSubir,clausulazo:vClausulazo,pendientes:vPendientes,historial:vHistorial,liga:vLiga}[S.tab];
+  $('#view').innerHTML=S.ready<3?'<div class="empty">Cargando la liga…</div>':v();if(S.tab==='subir')updSub()}
+
+document.addEventListener('click',async e=>{const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.tab){S.tab=b.dataset.tab;S.edit=null;render();return}
+  if(b.dataset.mode){S.f.mode=b.dataset.mode;S.f.val='';render();return}
+  const a=b.dataset.act,id=b.dataset.id;if(!a)return;
+  if(a==='edit'){S.edit=id;render();return}if(a==='cancelEdit'){S.edit=null;render();return}
+  if(!db||!canWrite)return;const m=me();b.disabled=true;
+  try{
+    if(a==='saveReal'){const p=S.players.find(x=>x.id===id),r=num($('#er').value);if(!p||r<=0){toast('Pon una cláusula válida');b.disabled=false;return}
+      await db.doc('jugadores/'+id).update({real:r,virtual:(+p.virtual||0)>r?p.virtual:0,act:Date.now()});S.edit=null;toast('Cláusula de Mister actualizada')}
+    if(a==='delP'){if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent='Pulsa otra vez para quitarlo';b.disabled=false;return}await db.doc('jugadores/'+id).delete();S.edit=null;toast('Jugador quitado')}
+    if(a==='reqSub'){const r=calcSub();if(!r||!r.ok){b.disabled=false;return}
+      if(pend().some(o=>o.jugadorId===r.p.id)){toast('Ese jugador ya tiene una operación pendiente');b.disabled=false;return}
+      await db.collection('operaciones').add({tipo:'subida',jugadorId:r.p.id,jugador:r.p.nombre,solicitante:m,desde:r.from,hasta:r.to,coste:r.cost,estado:'pendiente',creado:Date.now()});
+      S.f.val='';S.tab='pendientes';toast('Enviado. Falta que un admin lo valide')}
+    if(a==='reqCl'){const r=calcCl();if(!r){b.disabled=false;return}
+      if(pend().some(o=>o.jugadorId===r.p.id)){toast('Ese jugador ya tiene una operación pendiente');b.disabled=false;return}
+      await db.collection('operaciones').add({tipo:'clausulazo',jugadorId:r.p.id,jugador:r.p.nombre,solicitante:m,vendedor:r.p.dueno,real:r.R,virtual:r.V,diferencia:r.D,estado:'pendiente',creado:Date.now()});
+      S.tab='pendientes';toast('Aviso enviado a los admins')}
+    if(a==='val'||a==='rej'||a==='can'){const o=S.ops.find(x=>x.id===id);if(!o)return;const ref=db.doc('operaciones/'+id);
+      if(a==='val'){if(!validators(o).includes(m))return;const s=await db.doc('jugadores/'+o.jugadorId).get();if(!s.exists){toast('El jugador ya no está registrado: recházala');b.disabled=false;return}
+        const p=s.data();
+        if(o.tipo==='subida'){if(p.dueno!==o.solicitante||eff(p)!==o.desde){toast('La cláusula o el dueño han cambiado desde la petición: recházala y que la pidan otra vez');b.disabled=false;return}
+          await db.doc('jugadores/'+o.jugadorId).update({virtual:o.hasta,act:Date.now()})}
+        else{if(p.dueno!==o.vendedor){toast('El jugador ya no es de '+nm(o.vendedor)+': recházala');b.disabled=false;return}
+          const nr=num(($('#nr-'+CSS.escape(id))||{}).value)||o.real;await db.doc('jugadores/'+o.jugadorId).update({dueno:o.solicitante,real:nr,virtual:0,act:Date.now()})}
+        await ref.update({estado:'validada',validador:m,resuelto:Date.now()});toast('Validado')}
+      if(a==='rej'&&validators(o).includes(m)){await ref.update({estado:'rechazada',validador:m,resuelto:Date.now()});toast('Rechazado')}
+      if(a==='can'&&o.solicitante===m){await ref.update({estado:'cancelada',resuelto:Date.now()});toast('Cancelado')}}
+    if(a==='claim'){const n=b.dataset.n;if(!(await db.claim('miembros/'+n,uid))){toast(nm(n)+' ya está vinculado');b.disabled=false;return}
+      toast('Hecho, eres '+nm(n))}
+    if(a==='unlink'){const n=b.dataset.n;if(S.members[n]?.uid!==uid&&!isAdmin(m))return;await db.doc('miembros/'+n).set({uid:null,desde:Date.now()});toast(nm(n)+' desvinculado')}
+    if(a==='ratio'&&isAdmin(m)){const r=parseFloat(String($('#rt2').value).replace(',','.'));if(!(r>0&&r<100)){toast('Pon un número válido, por ejemplo 2,5');b.disabled=false;return}await db.doc('liga/config').set({ratio:r});toast('Regla guardada')}
+    render()
+  }catch(err){b.disabled=false;fail(err)}});
+
+document.addEventListener('submit',async e=>{if(e.target.id!=='addP')return;e.preventDefault();if(!db||!canWrite)return;const m=me();
+  const n=$('#apn').value.trim(),d=$('#apd').value,r=num($('#apr').value);if(!n||r<=0){toast('Pon nombre y cláusula');return}
+  if(!isAdmin(m)&&d!==m)return;
+  try{await db.collection('jugadores').add({nombre:n.slice(0,60),dueno:d,real:r,virtual:0,act:Date.now()});toast(n+' añadido');render()}catch(err){fail(err)}});
+
+document.addEventListener('input',e=>{const t=e.target;
+  if(t.dataset.f){S.f[t.dataset.f]=t.value;if(t.dataset.f==='pid'){S.f.val=''}if(S.tab==='subir'){if(t.dataset.f==='pid')render();else updSub()}}
+  if(t.dataset.c){S.c[t.dataset.c]=t.value;if(t.dataset.c==='pid')render()}});
+document.addEventListener('change',e=>{const t=e.target;if(t.dataset.c&&t.dataset.c!=='pid')render();
+  if(t.inputMode==='numeric'&&t.tagName==='INPUT'&&t.value.trim()){const v=num(t.value);t.value=fmt(v);if(t.dataset.f)S.f[t.dataset.f]=t.value;if(t.dataset.c)S.c[t.dataset.c]=t.value}});
+
+render();
+window.startApp=(fdb,id)=>{
+  db=fdb;uid=id;canWrite=!!id;
+  const timer=setTimeout(()=>{$('#status').textContent='Los datos tardan en llegar; puede que lo que ves no esté al día.'},10000);
+  const got=()=>{S.ready++;if(S.ready>=3){clearTimeout(timer);$('#status').textContent=''}};
+  const err=e=>{console.error(e);clearTimeout(timer);$('#status').textContent=e&&e.code==='permission-denied'?'Firestore rechaza la lectura: revisa las reglas.':'Se perdió la conexión con los datos. Recarga la página.'};
+  let a=0,b=0,c=0;
+  db.collection('jugadores').onSnapshot(s=>{S.players=s.docs.map(d=>({id:d.id,...d.data()}));if(!a++)got();render()},err);
+  db.collection('operaciones').orderBy('creado','desc').limit(400).onSnapshot(s=>{S.ops=s.docs.map(d=>({id:d.id,...d.data()}));if(!b++)got();render()},err);
+  db.collection('miembros').onSnapshot(s=>{S.members={};s.docs.forEach(d=>S.members[d.id]=d.data());if(!c++)got();if(!me()&&canWrite&&S.tab==='plantillas'&&S.ready>=3)S.tab='liga';render()},err);
+  db.doc('liga/config').onSnapshot(s=>{if(s.exists&&+s.data().ratio>0)S.ratio=+s.data().ratio;render()},()=>{});
+};
+window.appStatus=t=>{$('#status').textContent=t;$('#who').textContent='Sin conexión'};
+}
+</script>
+<script type="module">
+const V='11.0.2',B='https://www.gstatic.com/firebasejs/'+V+'/';
+try{
+  const {firebaseConfig}=await import('./firebase-config.js');
+  if(!firebaseConfig||!firebaseConfig.projectId||firebaseConfig.projectId.startsWith('PON_'))throw {code:'noconfig'};
+  const {initializeApp}=await import(B+'firebase-app.js');
+  const {getAuth,signInAnonymously,onAuthStateChanged}=await import(B+'firebase-auth.js');
+  const F=await import(B+'firebase-firestore.js');
+  const app=initializeApp(firebaseConfig),fs=F.getFirestore(app),auth=getAuth(app);
+  const wd=s=>({id:s.id,exists:s.exists(),data:()=>s.data()});
+  const D=p=>{const r=F.doc(fs,p);return{get:async()=>wd(await F.getDoc(r)),set:d=>F.setDoc(r,d),update:d=>F.updateDoc(r,d),delete:()=>F.deleteDoc(r),onSnapshot:(n,e)=>F.onSnapshot(r,s=>n(wd(s)),e)}};
+  const Q=(q,ref)=>({orderBy:(f,d)=>Q(F.query(q,F.orderBy(f,d)),ref),limit:n=>Q(F.query(q,F.limit(n)),ref),onSnapshot:(n,e)=>F.onSnapshot(q,s=>n({docs:s.docs.map(wd)}),e),add:d=>F.addDoc(ref,d)});
+  const db={doc:D,collection:p=>{const r=F.collection(fs,p);return Q(r,r)},
+    claim:(path,uid)=>F.runTransaction(fs,async t=>{const r=F.doc(fs,path),s=await t.get(r);if(s.exists()&&s.data().uid)return false;t.set(r,{uid,desde:Date.now()});return true})};
+  let started=false;
+  onAuthStateChanged(auth,u=>{if(u&&!started){started=true;window.startApp(db,u.uid)}});
+  if(!auth.currentUser)await signInAnonymously(auth);
+}catch(e){console.error(e);window.appStatus(e&&e.code==='noconfig'?'Falta la configuración de Firebase (firebase-config.js).':'No se pudo conectar con Firebase. Revisa la configuración y que el inicio de sesión anónimo esté activado.')}
+</script>
+</body></html>
