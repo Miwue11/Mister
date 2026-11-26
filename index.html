@@ -64,6 +64,20 @@ td.r,th.r{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .alert{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:rgba(244,198,74,.12);border:1px solid var(--gold);color:var(--ink);border-radius:14px;padding:12px 14px;margin-top:14px}
 .alert b{color:var(--gold)}.rk{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}.rk:first-of-type{border-top:0}.rk .n{font:700 20px "Barlow Condensed";color:var(--mut);text-align:center}
 .tag.b{background:rgba(255,91,120,.15);color:var(--bad)}
+.pc{background:var(--panel2);border-radius:22px;padding:14px;margin-top:10px;display:grid;grid-template-columns:38px 80px minmax(0,1fr) auto;gap:12px;align-items:center}
+.pc-l{display:flex;flex-direction:column;align-items:center;gap:6px}.pc-l img{width:28px;height:28px;object-fit:contain}
+.pos{font:700 14px Barlow;border-radius:8px;padding:3px 7px;color:#14121c;line-height:1.2}.pos1{background:#f4c64a}.pos2{background:#5aa9ff}.pos3{background:#2fd39a}.pos4{background:#ff7d9a}
+.pts{background:#fff;color:#0e1120;font:700 15px Barlow;border-radius:8px;padding:3px 6px;min-width:36px;text-align:center;line-height:1.2}
+.pc-ph{width:80px;height:80px;border-radius:18px;background:#10131f;object-fit:cover;object-position:top;display:block}
+.pc-n{font:700 21px/1.1 Barlow;overflow-wrap:anywhere}.pc-v{color:var(--mut);font-size:17px;margin:5px 0 7px;white-space:nowrap}
+.up{color:var(--ok)}.dn{color:var(--bad)}
+.pc-a{display:inline-flex;gap:8px;align-items:center;background:#2a3050;border-radius:12px;padding:5px 9px 5px 5px}.pc-a b{background:#1a1e30;border-radius:8px;padding:3px 7px;font-weight:700}
+.bars{display:flex;gap:3px;align-items:flex-end;height:24px}.bars i{width:6px;border-radius:3px;display:block}
+.pc-r{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.box{background:#2a3050;border-radius:12px;padding:6px 10px;text-align:right}.box small{display:block;font-size:12px;color:var(--mut)}.box b{font:700 20px "Barlow Condensed";white-space:nowrap}
+.pc-f{grid-column:1/-1;background:#2a3050;border-radius:14px;padding:10px 12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:15px}
+.pc-f svg{flex:none}.pc-f .btns{margin:0 0 0 auto}
+@media(max-width:520px){.pc{grid-template-columns:34px 66px minmax(0,1fr);gap:10px}.pc-ph{width:66px;height:66px;border-radius:15px}.pc-n{font-size:19px}.pc-r{grid-column:1/-1;flex-direction:row;justify-content:flex-end}}
 #toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:12px;font-weight:600;max-width:92vw;display:none;z-index:9}
 #status{font-size:14px;color:var(--gold);margin-top:8px}
 @media(prefers-reduced-motion:no-preference){.card{animation:in .25s ease-out}@keyframes in{from{opacity:0;transform:translateY(6px)}}}
@@ -102,6 +116,18 @@ function renderWho(){const m=me();$('#who').innerHTML=m?`Eres <b>${esc(nm(m))}</
 function needMe(){return canWrite&&me()?'':`<div class="card empty">${canWrite?'Primero dile a la app quién eres en la pestaña «Liga».':'Conectando con la liga…'}</div>`}
 const ownerOpts=(sel,all)=>(all?MEMBERS:[me()]).map(m=>`<option value="${m}" ${m===sel?'selected':''}>${esc(nm(m))}</option>`).join('');
 
+const ICO_SH='<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5l-8-3z"/></svg>';
+const ICO_LK='<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10V7a5 5 0 0 1 10 0v3h1a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V11a1 1 0 0 1 1-1h1zm2 0h6V7a3 3 0 0 0-6 0v3z"/></svg>';
+const barCol=v=>v==null?'#4a5070':v>=10?'#5ac8fa':v>=6?'#3fd2c7':v>=2?'#2fd39a':v>=0?'#f4c64a':'#ff5b78';
+function pcard(p,extra){const virt=(+p.virtual||0)>(+p.real||0),r=(p.racha||[]);
+  const d=p.valorPrev?(+p.valor||0)-(+p.valorPrev):0;
+  const bars=r.length?`<span class="bars">${r.map(v=>`<i style="height:${v==null?4:Math.max(4,Math.min(24,Math.abs(v)*2+4))}px;background:${barCol(v)}"></i>`).join('')}</span>`:'';
+  const foot=+p.blindaje>0?`${ICO_LK}<span>Blindado en Mister: ahora no se puede clausular</span>`:virt?`${ICO_SH}<span>Cláusula virtual <b>${fmt(p.virtual)}</b> · en Mister ${fmt(p.real)}</span>`:`${ICO_SH}<span>Cláusula de Mister, sin parte virtual</span>`;
+  return `<div class="pc"><div class="pc-l">${/^https:\/\//.test(p.escudo||'')?`<img alt="" loading="lazy" src="${esc(p.escudo)}" onerror="this.style.visibility='hidden'">`:''}${pos[p.posicion]?`<span class="pos pos${p.posicion}">${pos[p.posicion]}</span>`:''}${p.puntos!=null&&p.misterId?`<span class="pts">${fmt(p.puntos)}</span>`:''}</div>
+  ${phImg(p).replace('class="ph"','class="pc-ph"')||'<div class="pc-ph"></div>'}
+  <div><div class="pc-n">${esc(p.nombre)}</div>${p.valor?`<div class="pc-v">€ ${fmt(p.valor)} ${d>0?'<span class="up">↑</span>':d<0?'<span class="dn">↓</span>':''}</div>`:''}${p.misterId?`<span class="pc-a"><b>${String(Math.round((+p.media||0)*10)/10).replace('.',',')}</b>${bars}</span>`:''}</div>
+  <div class="pc-r"><div class="box"><small>Cláusula</small><b>${fmt(eff(p))}</b></div>${d?`<div class="box"><small>Hoy</small><b class="${d>0?'up':'dn'}">${d>0?'+':''}${fmt(d)}</b></div>`:''}</div>
+  <div class="pc-f">${foot}${extra||''}</div></div>`}
 function vPlantillas(){
   const m=me(),can=canWrite&&m;
   let h='';
@@ -115,8 +141,9 @@ function vPlantillas(){
     if(fo)h+=`<div class="sub" style="margin:-4px 0 6px">${fo.valor!=null?`Valor del equipo ${fmt(fo.valor)}`:''}${fo.saldo!=null?` · Saldo ${fmt(fo.saldo)}${fo.futuro!=null?` (futuro ${fmt(fo.futuro)})`:''} · Puja máxima ${fmt(fo.saldo+Math.round((fo.valor||0)*.25))}`:''}</div>`;
     if(!ps.length)h+=`<div class="sub">Sin jugadores registrados.</div>`;
     for(const p of ps){const virt=(+p.virtual||0)>(+p.real||0),mine=can&&(m===o||isAdmin(m));
-      h+=`<div class="pl"><div class="row"><div class="who">${phImg(p)}<div><div class="pn">${esc(p.nombre)} ${virt?'<span class="tag v">virtual</span>':''}${+p.blindaje>0?' <span class="tag b">blindado</span>':''}</div><div class="sub">${p.puntos?`${fmt(p.puntos)} pts · `:''}${p.valor?`Valor ${fmt(p.valor)} · `:''}Cláusula Mister ${fmt(p.real)}${virt?` · +${fmt(p.virtual-p.real)} virtual`:''}</div></div></div><div class="big">${fmt(eff(p))}</div></div>`;
-      if(mine&&!p.misterId)h+=S.edit===p.id?`<div class="grid2"><div><label for="er">Nueva cláusula en Mister</label><input id="er" inputmode="numeric" value="${fmt(p.real)}"></div><div><label>&nbsp;</label><div class="btns" style="margin:0"><button class="btn ok" data-act="saveReal" data-id="${esc(p.id)}">Guardar</button><button class="btn ghost" data-act="cancelEdit">×</button></div></div></div><div class="note">Úsalo cuando la subas gratis en Mister o cambie allí. Si la de Mister supera la virtual, manda la de Mister.</div><div class="btns"><button class="btn bad" data-act="delP" data-id="${esc(p.id)}">Quitar jugador</button></div>`:`<div class="btns" style="margin-top:6px"><button class="btn ghost" data-act="edit" data-id="${esc(p.id)}">Actualizar Mister</button></div>`;
+      const ed=mine&&!p.misterId&&S.edit!==p.id?`<div class="btns"><button class="btn ghost" data-act="edit" data-id="${esc(p.id)}">Actualizar Mister</button></div>`:'';
+      h+=`<div>`+pcard(p,ed);
+      if(mine&&!p.misterId&&S.edit===p.id)h+=`<div class="grid2"><div><label for="er">Nueva cláusula en Mister</label><input id="er" inputmode="numeric" value="${fmt(p.real)}"></div><div><label>&nbsp;</label><div class="btns" style="margin:0"><button class="btn ok" data-act="saveReal" data-id="${esc(p.id)}">Guardar</button><button class="btn ghost" data-act="cancelEdit">×</button></div></div></div><div class="note">Úsalo cuando la subas gratis en Mister o cambie allí. Si la de Mister supera la virtual, manda la de Mister.</div><div class="btns"><button class="btn bad" data-act="delP" data-id="${esc(p.id)}">Quitar jugador</button></div>`;
       h+=`</div>`}
     h+=`</section>`}
   return h}
