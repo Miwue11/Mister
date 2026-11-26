@@ -1,0 +1,26 @@
+.pc{background:var(--panel2);border-radius:22px;padding:14px;margin-top:10px;display:grid;grid-template-columns:38px 80px minmax(0,1fr) auto;gap:12px;align-items:center}
+.pc-l{display:flex;flex-direction:column;align-items:center;gap:6px}
+.badge-team{width:28px;height:28px;object-fit:contain}
+.pos{font:700 14px Barlow;border-radius:8px;padding:3px 7px;color:#14121c;line-height:1.2}
+.pos1{background:#f4c64a}.pos2{background:#5aa9ff}.pos3{background:#2fd39a}.pos4{background:#ff7d9a}
+.pts{background:#fff;color:#0e1120;font:700 15px Barlow;border-radius:8px;padding:3px 6px;min-width:36px;text-align:center;line-height:1.2}
+.pc-ph{width:80px;height:80px;border-radius:18px;background:#10131f;object-fit:cover;object-position:top;display:block}
+.pc-n{font:700 21px/1.1 Barlow;overflow-wrap:anywhere}
+.pc-v{color:var(--mut);font-size:17px;margin:5px 0 7px;white-space:nowrap}
+.pc-a{display:inline-flex;gap:8px;align-items:center;background:#2a3050;border-radius:12px;padding:5px 9px 5px 5px}
+.pc-a b{background:#1a1e30;border-radius:8px;padding:3px 7px;font-weight:700}
+.bars{display:flex;gap:3px;align-items:flex-end;height:24px}
+.bars i{width:6px;border-radius:3px;display:block}
+.pc-r{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.box{background:#2a3050;border-radius:12px;padding:6px 10px;text-align:right}
+.box small{display:block;font-size:12px;color:var(--mut)}
+.box b{font:700 20px "Barlow Condensed";white-space:nowrap}
+.pc-f{grid-column:1/-1;background:#2a3050;border-radius:14px;padding:10px 12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:15px}
+.pc-f svg{flex:none}
+.pc-f .btns{margin:0 0 0 auto}
+@media(max-width:520px){
+  .pc{grid-template-columns:34px 66px minmax(0,1fr);gap:10px}
+  .pc-ph{width:66px;height:66px;border-radius:15px}
+  .pc-n{font-size:19px}
+  .pc-r{grid-column:1/-1;flex-direction:row;justify-content:flex-end}
+}
