@@ -52,7 +52,8 @@ function parseStandings(html) {
     const id = (b.match(/users\/(\d+)\//) || [])[1];
     if (!id || seen.has(id)) continue;
     seen.add(id);
-    const name = ((b.match(/class="name\s*">\s*([^<]+)/) || [])[1] || `Manager ${id}`).trim();
+    const raw = (b.match(/class="name\b[^"]*"[^>]*>([\s\S]*?)<\/div>/) || [])[1] || "";
+    const name = raw.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim() || `Manager ${id}`;
     out.push({ id, name });
   }
   return out;
@@ -102,7 +103,12 @@ async function main() {
   try {
     if (!COOKIE) throw new Error("Falta el secreto MISTER_COOKIE");
     if (COMMUNITY) await getHtml(`/action/change?id_community=${encodeURIComponent(COMMUNITY)}`).catch(() => {});
-    const managers = parseStandings(await getHtml("/standings"));
+    const stHtml = await getHtml("/standings");
+    const managers = parseStandings(stHtml);
+    // El nombre de la propia cuenta a veces no viene en su fila: se toma de _FG_user.
+    const me = stHtml.match(/_FG_user\s*=\s*\{[\s\S]{0,3000}?["']?id["']?\s*:\s*["']?(\d+)[\s\S]{0,3000}?["']?name["']?\s*:\s*["']([^"']+)["']/);
+    for (const m of managers) if (/^Manager \d+$/.test(m.name) && me && me[1] === m.id) m.name = me[2];
+    console.log("Mánagers:", managers.map(m => m.name).join(", "));
     if (!managers.length) throw new Error("SESION: no se ha podido leer la clasificación (¿sesión caducada o liga distinta?)");
     console.log(`Clasificación: ${managers.length} mánagers`);
 
