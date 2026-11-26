@@ -163,6 +163,7 @@ async function main() {
       const owner = c.owner && ids.has(c.owner) ? c.owner : String(p.id_uc);
       const foto = String(p.photoUrl || p.photo_url || p.photo || "").trim();
       found.push({ id: String(p.id), nombre: String(p.name || "").trim(), owner, clause: c.clause, valor: Number(p.value) || 0,
+        puntos: Number(p.points) || 0, media: Number(p.avg) || 0, blindaje: Number(p.shield) || 0, posicion: Number(p.position) || 0,
         foto: /^https:\/\//.test(foto) ? foto : `https://cdn-mister.mundodeportivo.com/file/cdn-common/players/${p.id}.png` });
       if (!(Number(p.clause) > 0)) await sleep(350);
     }
@@ -182,7 +183,8 @@ async function main() {
       seenDocs.add(docId);
       const ref = db.doc("jugadores/" + docId);
       const cur = existing.get(docId);
-      const base = { nombre: f.nombre, dueno, misterId: f.id, misterOwner: f.owner, valor: f.valor, foto: f.foto, sync: now };
+      const base = { nombre: f.nombre, dueno, misterId: f.id, misterOwner: f.owner, valor: f.valor, foto: f.foto,
+        puntos: f.puntos, media: f.media, blindaje: f.blindaje, posicion: f.posicion, sync: now };
       if (f.clause) base.real = f.clause;
       if (cur) {
         if (cur.dueno !== dueno) { await ref.set({ ...base, virtual: 0, act: now }, { merge: true }); cambios++; }

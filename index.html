@@ -1,6 +1,14 @@
 <!DOCTYPE html>
 <html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0e1120">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Cláusulas">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
 <title>Cláusulas Liga Mister</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
@@ -53,6 +61,9 @@ details summary{cursor:pointer;color:var(--mut);margin-top:12px;min-height:30px}
 table{width:100%;border-collapse:collapse;font-size:15px}th,td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left}
 td.r,th.r{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .empty{color:var(--mut);text-align:center;padding:26px 8px}
+.alert{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:rgba(244,198,74,.12);border:1px solid var(--gold);color:var(--ink);border-radius:14px;padding:12px 14px;margin-top:14px}
+.alert b{color:var(--gold)}.rk{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}.rk:first-of-type{border-top:0}.rk .n{font:700 20px "Barlow Condensed";color:var(--mut);text-align:center}
+.tag.b{background:rgba(255,91,120,.15);color:var(--bad)}
 #toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:12px;font-weight:600;max-width:92vw;display:none;z-index:9}
 #status{font-size:14px;color:var(--gold);margin-top:8px}
 @media(prefers-reduced-motion:no-preference){.card{animation:in .25s ease-out}@keyframes in{from{opacity:0;transform:translateY(6px)}}}
@@ -82,7 +93,7 @@ const S={players:[],ops:[],members:{},ratio:2.5,mister:null,mapa:{},tab:'plantil
 const me=()=>MEMBERS.find(m=>uid&&S.members[m]&&S.members[m].uid===uid)||null;
 const toast=m=>{const t=$('#toast');t.textContent=m;t.style.display='block';clearTimeout(toast.h);toast.h=setTimeout(()=>t.style.display='none',3800)};
 const fail=e=>{console.error(e);if(e&&e.code==='permission-denied')toast('Sin permiso para guardar: revisa las reglas de Firestore.');else if(e&&e.code==='resource-exhausted')toast('Se ha superado el límite gratuito de Firebase por hoy.');else toast('No se pudo guardar. Inténtalo de nuevo.')};
-const TABS=[['plantillas','Plantillas'],['subir','Subir cláusula'],['clausulazo','Clausulazo'],['pendientes','Pendientes'],['historial','Historial'],['liga','Liga']];
+const TABS=[['plantillas','Plantillas'],['subir','Subir cláusula'],['clausulazo','Clausulazo'],['pendientes','Pendientes'],['rankings','Rankings'],['historial','Historial'],['liga','Liga']];
 const fin=m=>{const st=S.mister;if(!st||!st.managers)return null;const id=Object.keys(S.mapa).find(k=>S.mapa[k]===m);if(!id)return null;const g=st.managers.find(x=>x.id===id);const s=st.saldo&&st.saldo.id===id?st.saldo:null;return{valor:g&&g.valor!=null?+g.valor:null,saldo:s?s.actual:null,futuro:s?s.futuro:null}};
 const pend=()=>S.ops.filter(o=>o.estado==='pendiente');
 
@@ -104,7 +115,7 @@ function vPlantillas(){
     if(fo)h+=`<div class="sub" style="margin:-4px 0 6px">${fo.valor!=null?`Valor del equipo ${fmt(fo.valor)}`:''}${fo.saldo!=null?` · Saldo ${fmt(fo.saldo)}${fo.futuro!=null?` (futuro ${fmt(fo.futuro)})`:''} · Puja máxima ${fmt(fo.saldo+Math.round((fo.valor||0)*.25))}`:''}</div>`;
     if(!ps.length)h+=`<div class="sub">Sin jugadores registrados.</div>`;
     for(const p of ps){const virt=(+p.virtual||0)>(+p.real||0),mine=can&&(m===o||isAdmin(m));
-      h+=`<div class="pl"><div class="row"><div class="who">${p.misterId?`<img class="ph" alt="" loading="lazy" src="${esc(/^https:\/\/cdn-mister\.mundodeportivo\.com\//.test(p.foto||'')?p.foto:'https://cdn-mister.mundodeportivo.com/file/cdn-common/players/'+encodeURIComponent(p.misterId)+'.png')}" onerror="this.style.visibility='hidden'">`:''}<div><div class="pn">${esc(p.nombre)} ${virt?'<span class="tag v">virtual</span>':''}</div><div class="sub">${p.valor?`Valor ${fmt(p.valor)} · `:''}Cláusula Mister ${fmt(p.real)}${virt?` · +${fmt(p.virtual-p.real)} virtual`:''}</div></div></div><div class="big">${fmt(eff(p))}</div></div>`;
+      h+=`<div class="pl"><div class="row"><div class="who">${phImg(p)}<div><div class="pn">${esc(p.nombre)} ${virt?'<span class="tag v">virtual</span>':''}${+p.blindaje>0?' <span class="tag b">blindado</span>':''}</div><div class="sub">${p.puntos?`${fmt(p.puntos)} pts · `:''}${p.valor?`Valor ${fmt(p.valor)} · `:''}Cláusula Mister ${fmt(p.real)}${virt?` · +${fmt(p.virtual-p.real)} virtual`:''}</div></div></div><div class="big">${fmt(eff(p))}</div></div>`;
       if(mine&&!p.misterId)h+=S.edit===p.id?`<div class="grid2"><div><label for="er">Nueva cláusula en Mister</label><input id="er" inputmode="numeric" value="${fmt(p.real)}"></div><div><label>&nbsp;</label><div class="btns" style="margin:0"><button class="btn ok" data-act="saveReal" data-id="${esc(p.id)}">Guardar</button><button class="btn ghost" data-act="cancelEdit">×</button></div></div></div><div class="note">Úsalo cuando la subas gratis en Mister o cambie allí. Si la de Mister supera la virtual, manda la de Mister.</div><div class="btns"><button class="btn bad" data-act="delP" data-id="${esc(p.id)}">Quitar jugador</button></div>`:`<div class="btns" style="margin-top:6px"><button class="btn ghost" data-act="edit" data-id="${esc(p.id)}">Actualizar Mister</button></div>`;
       h+=`</div>`}
     h+=`</section>`}
@@ -168,10 +179,32 @@ function vLiga(){const m=me(),adm=canWrite&&isAdmin(m);
   const mg=(st&&st.managers)||[];
   if(mg.length)ms+=`<label>Quién es quién en Mister</label>`+mg.map(x=>`<div class="pl row"><div>${esc(x.name)}</div><div>${adm?`<select data-mapa="${esc(x.id)}" style="width:auto"><option value="">Sin asignar</option>${MEMBERS.map(n=>`<option value="${n}" ${S.mapa[x.id]===n?'selected':''}>${esc(nm(n))}</option>`).join('')}</select>`:`<span class="sub">${S.mapa[x.id]?esc(nm(S.mapa[x.id])):'sin asignar'}</span>`}</div></div>`).join('');
   h+=`<section class="card"><h2>Conexión con Mister</h2>${ms}</section>`;
+  h+=`<section class="card"><h2>Instálala en el móvil</h2><div class="sub"><b>iPhone (Safari):</b> botón Compartir → «Añadir a pantalla de inicio».<br><b>Android (Chrome):</b> menú ⋮ → «Instalar aplicación» o «Añadir a pantalla de inicio».<br>Se abre a pantalla completa con su propio icono. En iPhone, la app instalada no comparte sesión con Safari: si ya te habías elegido en Safari, pide a un admin que te desvincule y pulsa «Soy yo» desde el icono.</div></section>`;
   h+=`<section class="card"><h2>Regla de cálculo</h2><div class="sub">Cada 1 € pagado sube la cláusula ${String(S.ratio).replace('.',',')} €. Sale de Mister: pagar 133.333 sube 1.000.000 a 1.333.333.</div>${adm?`<label for="rt2">Euros de cláusula por euro pagado</label><div class="grid2"><input id="rt2" inputmode="decimal" value="${String(S.ratio).replace('.',',')}"><button class="btn ghost" data-act="ratio">Guardar</button></div>`:''}</section>`;return h}
 
-function render(){renderWho();renderTabs();const v={plantillas:vPlantillas,subir:vSubir,clausulazo:vClausulazo,pendientes:vPendientes,historial:vHistorial,liga:vLiga}[S.tab];
-  $('#view').innerHTML=S.ready<3?'<div class="empty">Cargando la liga…</div>':v();if(S.tab==='subir')updSub()}
+function adminAlert(){const m=me();if(!m||!isAdmin(m)||!canWrite||S.tab==='pendientes')return '';const n=pend().filter(o=>validators(o).includes(m)).length;
+  return n?`<div class="alert"><span><b>${n}</b> ${n===1?'operación espera':'operaciones esperan'} tu validación.</span><button class="btn ok" data-tab="pendientes">Validar ahora</button></div>`:''}
+const pos={1:'PT',2:'DF',3:'MC',4:'DL'};
+const phImg=p=>p.misterId?`<img class="ph" alt="" loading="lazy" src="${esc(/^https:\/\/cdn-mister\.mundodeportivo\.com\//.test(p.foto||'')?p.foto:'https://cdn-mister.mundodeportivo.com/file/cdn-common/players/'+encodeURIComponent(p.misterId)+'.png')}" onerror="this.style.visibility='hidden'">`:'';
+function vRankings(){const m=me(),all=S.players;
+  if(!all.length)return '<div class="card empty">Aún no hay jugadores cargados.</div>';
+  const rivals=all.filter(p=>p.dueno!==m&&eff(p)>0);
+  const chollos=rivals.map(p=>({p,ppm:(+p.puntos||0)/(eff(p)/1e6),ratio:p.valor?eff(p)/p.valor:null})).filter(x=>(+x.p.puntos||0)>0).sort((a,b)=>b.ppm-a.ppm).slice(0,12);
+  const row=(i,p,right,sub)=>`<div class="rk"><div class="n">${i+1}</div><div class="who">${phImg(p)}<div><div class="pn">${esc(p.nombre)} ${+p.blindaje>0?'<span class="tag b">blindado</span>':''}${(+p.virtual||0)>(+p.real||0)?' <span class="tag v">virtual</span>':''}</div><div class="sub">${esc(nm(p.dueno))}${pos[p.posicion]?' · '+pos[p.posicion]:''} · ${sub}</div></div></div><div class="big">${right}</div></div>`;
+  let h=`<section class="card"><h2>Chollos para clausular</h2><div class="sub">Rivales que más puntos dan por cada millón de cláusula${m?'':' (no sabe quién eres: salen todos)'}. Cuenta la cláusula virtual si la tienen.</div>`;
+  h+=chollos.length?chollos.map((x,i)=>row(i,x.p,fmt(eff(x.p)),`${fmt(x.p.puntos)} pts · media ${String(x.p.media||0).replace('.',',')} · ${x.ppm.toFixed(1).replace('.',',')} pts/M${x.ratio?` · cláusula ${x.ratio.toFixed(1).replace('.',',')}× su valor`:''}`)).join(''):'<div class="sub">Faltan los puntos de Mister: llegan en la próxima lectura.</div>';
+  h+=`<div class="note">Los marcados como blindados no se pueden clausular en Mister de momento.</div></section>`;
+  const topC=[...all].sort((a,b)=>eff(b)-eff(a)).slice(0,10);
+  h+=`<section class="card"><h2>Cláusulas más altas</h2>${topC.map((p,i)=>row(i,p,fmt(eff(p)),`valor ${fmt(p.valor)}`)).join('')}</section>`;
+  const topV=[...all].sort((a,b)=>(+b.valor||0)-(+a.valor||0)).slice(0,10);
+  h+=`<section class="card"><h2>Jugadores más caros</h2>${topV.map((p,i)=>row(i,p,fmt(p.valor),`cláusula ${fmt(eff(p))}`)).join('')}</section>`;
+  const ok=S.ops.filter(o=>o.estado==='validada'&&o.tipo==='subida');
+  const inv=MEMBERS.map(x=>({x,t:ok.filter(o=>o.solicitante===x).reduce((s,o)=>s+(+o.coste||0),0),n:ok.filter(o=>o.solicitante===x).length,v:all.filter(p=>p.dueno===x).reduce((s,p)=>s+Math.max(0,(+p.virtual||0)-(+p.real||0)),0)})).sort((a,b)=>b.t-a.t);
+  const mx=Math.max(1,...inv.map(i=>i.t));
+  h+=`<section class="card"><h2>Quién ha invertido más en blindar</h2>${inv.map((i,k)=>`<div class="rk"><div class="n">${k+1}</div><div><div class="pn">${esc(nm(i.x))}</div><div class="sub">${i.n} subida${i.n===1?'':'s'} · ${fmt(i.v)} de cláusula virtual ahora</div><div style="height:6px;background:var(--panel2);border-radius:3px;margin-top:6px"><div style="height:6px;border-radius:3px;background:var(--ok);width:${(i.t/mx*100).toFixed(1)}%"></div></div></div><div class="big">${fmt(i.t)}</div></div>`).join('')}<div class="note">Dinero pagado en subidas virtuales validadas.</div></section>`;
+  return h}
+function render(){renderWho();renderTabs();const v={plantillas:vPlantillas,subir:vSubir,clausulazo:vClausulazo,pendientes:vPendientes,rankings:vRankings,historial:vHistorial,liga:vLiga}[S.tab];
+  $('#view').innerHTML=S.ready<3?'<div class="empty">Cargando la liga…</div>':adminAlert()+v();if(S.tab==='subir')updSub()}
 
 document.addEventListener('click',async e=>{const b=e.target.closest('button');if(!b)return;
   if(b.dataset.tab){S.tab=b.dataset.tab;S.edit=null;render();return}
@@ -221,6 +254,7 @@ document.addEventListener('change',async e=>{const t=e.target;
     try{await db.doc('mister/mapa').set({mapa:m});toast('Guardado. Se aplica en la próxima lectura de Mister')}catch(err){fail(err)}return}if(t.dataset.c&&t.dataset.c!=='pid')render();
   if(t.inputMode==='numeric'&&t.tagName==='INPUT'&&t.value.trim()){const v=num(t.value);t.value=fmt(v);if(t.dataset.f)S.f[t.dataset.f]=t.value;if(t.dataset.c)S.c[t.dataset.c]=t.value}});
 
+try{if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}
 render();
 window.startApp=(fdb,id)=>{
   db=fdb;uid=id;canWrite=!!id;
