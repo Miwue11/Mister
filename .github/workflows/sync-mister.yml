@@ -3,7 +3,12 @@ name: Sincronizar con Mister
 on:
   schedule:
     - cron: "17 */3 * * *"   # cada 3 horas
-  workflow_dispatch: {}       # botón "Run workflow" para lanzarlo a mano
+  workflow_dispatch:          # botón "Run workflow" para lanzarlo a mano
+    inputs:
+      diag:
+        description: "Diagnóstico"
+        required: false
+        default: ""
 
 concurrency:
   group: sync-mister
@@ -28,4 +33,5 @@ jobs:
           MISTER_X_AUTH: ${{ secrets.MISTER_X_AUTH }}
           MISTER_COMMUNITY_ID: ${{ vars.MISTER_COMMUNITY_ID }}
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          DIAG: ${{ github.event.inputs.diag }}
         run: node sync-mister.mjs

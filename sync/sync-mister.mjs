@@ -139,8 +139,18 @@ async function main() {
     const map = autoMap(managers, savedMap);
     if (JSON.stringify(map) !== JSON.stringify(savedMap)) await db.doc("mister/mapa").set({ mapa: map }, { merge: true });
 
+    if (process.env.DIAG) {
+      const u = stHtml.match(/_FG_user\s*=\s*\{[\s\S]{0,20000}?\};/);
+      const keys = u ? [...u[0].matchAll(/["']?([a-zA-Z_]+)["']?\s*:/g)].map(m => m[1]).slice(0, 80) : [];
+      console.log("DIAG _FG_user claves:", keys.join(","));
+      for (const k of ["id", "id_uc", "id_user", "uc"]) { const m = u && u[0].match(new RegExp('["\']?' + k + '["\']?\\s*:\\s*["\']?(\\d+)')); console.log("DIAG", k, "=", m ? m[1] : "-"); }
+      console.log("DIAG ids clasificación:", managers.map(m => m.id + ":" + m.name).join(" | "));
+      const team = await getHtml("/team");
+      console.log("DIAG imgs /team:", [...new Set([...team.matchAll(/<img[^>]+src=["']([^"']+)["']/g)].map(m => m[1].replace(/\d{3,}/g, "{n}")))].slice(0, 12).join(" | "));
+    }
     const ids = new Set(managers.map(m => m.id));
     const pool = await playerPool();
+    if (process.env.DIAG && pool[0]) console.log("DIAG pool campos:", JSON.stringify(Object.fromEntries(Object.entries(pool[0]).filter(([k, v]) => typeof v !== "object"))).slice(0, 900));
     const owned = pool.filter(p => p && p.id && ids.has(String(p.id_uc || "")));
     console.log(`Jugadores en la competición: ${pool.length}, con dueño en la liga: ${owned.length}`);
 
