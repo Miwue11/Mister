@@ -29,9 +29,3 @@ jobs:
           MISTER_COMMUNITY_ID: ${{ vars.MISTER_COMMUNITY_ID }}
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
         run: node sync-mister.mjs
-      - name: Diagnóstico de saldos
-        if: always()
-        working-directory: sync
-        env:
-          MISTER_COOKIE: ${{ secrets.MISTER_COOKIE }}
-        run: node diag.mjs || true

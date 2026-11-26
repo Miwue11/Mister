@@ -54,7 +54,9 @@ function parseStandings(html) {
     seen.add(id);
     const raw = (b.match(/class="name\b[^"]*"[^>]*>([\s\S]*?)<\/div>/) || [])[1] || "";
     const name = raw.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim() || `Manager ${id}`;
-    out.push({ id, name });
+    const played = (b.match(/class="played">([\s\S]*?)<\/div>/) || [])[1] || "";
+    const vm = played.replace(/<[^>]+>/g, " ").match(/([\d.]{5,})/);
+    out.push({ id, name, valor: vm ? Number(vm[1].replace(/\./g, "")) : null });
   }
   return out;
 }
@@ -120,6 +122,14 @@ async function main() {
     // El nombre de la propia cuenta a veces no viene en su fila: se toma de _FG_user.
     const me = stHtml.match(/_FG_user\s*=\s*\{[\s\S]{0,3000}?["']?id["']?\s*:\s*["']?(\d+)[\s\S]{0,3000}?["']?name["']?\s*:\s*["']([^"']+)["']/);
     for (const m of managers) if (/^Manager \d+$/.test(m.name) && me && me[1] === m.id) m.name = me[2];
+    const meId = me ? me[1] : null;
+    let saldo = null;
+    try {
+      const b = await ajax("/ajax/balance");
+      const d = b && b.data;
+      if (d && d.current != null) saldo = { id: meId, actual: Math.round(+d.current), futuro: d.future != null ? Math.round(+d.future) : null, fecha: Date.now() };
+    } catch (e) { console.warn("Saldo no disponible:", e.message); }
+    console.log("Saldo de la cuenta conectada:", saldo ? "leído" : "no disponible");
     console.log("Mánagers:", managers.map(m => m.name).join(", "));
     if (!managers.length) throw new Error("SESION: no se ha podido leer la clasificación (¿sesión caducada o liga distinta?)");
     console.log(`Clasificación: ${managers.length} mánagers`);
@@ -138,7 +148,9 @@ async function main() {
     for (const p of owned) {
       const c = await clauseOf(p.id).catch(e => { console.warn(`cláusula ${p.id}: ${e.message}`); return { clause: null, owner: null }; });
       const owner = c.owner && ids.has(c.owner) ? c.owner : String(p.id_uc);
-      found.push({ id: String(p.id), nombre: String(p.name || "").trim(), owner, clause: c.clause, valor: Number(p.value) || 0 });
+      const foto = String(p.photoUrl || p.photo_url || p.photo || "").trim();
+      found.push({ id: String(p.id), nombre: String(p.name || "").trim(), owner, clause: c.clause, valor: Number(p.value) || 0,
+        foto: /^https:\/\//.test(foto) ? foto : `https://cdn-mister.mundodeportivo.com/file/cdn-common/players/${p.id}.png` });
       await sleep(350);
     }
 
@@ -157,7 +169,7 @@ async function main() {
       seenDocs.add(docId);
       const ref = db.doc("jugadores/" + docId);
       const cur = existing.get(docId);
-      const base = { nombre: f.nombre, dueno, misterId: f.id, misterOwner: f.owner, valor: f.valor, sync: now };
+      const base = { nombre: f.nombre, dueno, misterId: f.id, misterOwner: f.owner, valor: f.valor, foto: f.foto, sync: now };
       if (f.clause) base.real = f.clause;
       if (cur) {
         if (cur.dueno !== dueno) { await ref.set({ ...base, virtual: 0, act: now }, { merge: true }); cambios++; }
@@ -180,7 +192,7 @@ async function main() {
     }
     await estado.set({
       ok: true, fecha: now, ultimaOk: now, error: null, caduca: tokenExpiry(),
-      managers, jugadores: found.length, sinDueno, nuevos, cambios, quitados
+      managers, saldo, jugadores: found.length, sinDueno, nuevos, cambios, quitados
     });
     console.log(`Hecho: ${nuevos} nuevos, ${cambios} cambios de dueño, ${quitados} quitados, ${sinDueno} de mánagers sin asignar`);
   } catch (e) {

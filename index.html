@@ -27,7 +27,7 @@ nav button.on{color:var(--ink);border-color:var(--ok)}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;margin-top:14px}
 .row{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
 .pl{padding:12px 0;border-top:1px solid var(--line)}.pl:first-of-type{border-top:0}
-.pn{font-weight:600;font-size:17px}.sub{color:var(--mut);font-size:14px}
+.pn{font-weight:600;font-size:17px}.ph{width:44px;height:44px;border-radius:50%;object-fit:cover;object-position:top;background:var(--panel2);flex:none}.who{display:flex;gap:12px;align-items:center}.sub{color:var(--mut);font-size:14px}
 .big{font:700 26px/1 "Barlow Condensed",sans-serif;white-space:nowrap;font-variant-numeric:tabular-nums}
 .tag{font-size:12px;font-weight:600;border-radius:6px;padding:2px 7px;background:var(--panel2);color:var(--mut)}
 .tag.v{background:rgba(32,211,140,.15);color:var(--ok)}.tag.a{background:rgba(244,198,74,.15);color:var(--gold)}
@@ -83,6 +83,7 @@ const me=()=>MEMBERS.find(m=>uid&&S.members[m]&&S.members[m].uid===uid)||null;
 const toast=m=>{const t=$('#toast');t.textContent=m;t.style.display='block';clearTimeout(toast.h);toast.h=setTimeout(()=>t.style.display='none',3800)};
 const fail=e=>{console.error(e);if(e&&e.code==='permission-denied')toast('Sin permiso para guardar: revisa las reglas de Firestore.');else if(e&&e.code==='resource-exhausted')toast('Se ha superado el límite gratuito de Firebase por hoy.');else toast('No se pudo guardar. Inténtalo de nuevo.')};
 const TABS=[['plantillas','Plantillas'],['subir','Subir cláusula'],['clausulazo','Clausulazo'],['pendientes','Pendientes'],['historial','Historial'],['liga','Liga']];
+const fin=m=>{const st=S.mister;if(!st||!st.managers)return null;const id=Object.keys(S.mapa).find(k=>S.mapa[k]===m);if(!id)return null;const g=st.managers.find(x=>x.id===id);const s=st.saldo&&st.saldo.id===id?st.saldo:null;return{valor:g&&g.valor!=null?+g.valor:null,saldo:s?s.actual:null,futuro:s?s.futuro:null}};
 const pend=()=>S.ops.filter(o=>o.estado==='pendiente');
 
 function renderTabs(){const n=pend().length;$('#tabs').innerHTML=TABS.map(([k,l])=>`<button data-tab="${k}" class="${S.tab===k?'on':''}">${l}${k==='pendientes'&&n?`<span class="badge">${n}</span>`:''}</button>`).join('')}
@@ -98,10 +99,12 @@ function vPlantillas(){
   if(can&&!synced)h+=`<form class="card" id="addP"><h2>Añadir jugador</h2><div class="grid2"><div><label for="apn">Jugador</label><input id="apn" required autocomplete="off" placeholder="Angeliño"></div><div><label for="apd">Dueño</label><select id="apd">${ownerOpts(m,isAdmin(m))}</select></div></div><label for="apr">Cláusula actual en Mister</label><input id="apr" inputmode="numeric" required placeholder="1.000.000"><div class="btns"><button class="btn ok">Añadir</button></div></form>`;
   for(const o of MEMBERS){
     const ps=S.players.filter(p=>p.dueno===o).sort((a,b)=>eff(b)-eff(a));
+    const fo=fin(o);
     h+=`<section class="card"><div class="row"><h2>${esc(nm(o))} ${isAdmin(o)?'<span class="tag a">admin</span>':''}</h2><span class="sub">${ps.length} jugador${ps.length===1?'':'es'}</span></div>`;
+    if(fo)h+=`<div class="sub" style="margin:-4px 0 6px">${fo.valor!=null?`Valor del equipo ${fmt(fo.valor)}`:''}${fo.saldo!=null?` · Saldo ${fmt(fo.saldo)}${fo.futuro!=null?` (futuro ${fmt(fo.futuro)})`:''} · Puja máxima ${fmt(fo.saldo+Math.round((fo.valor||0)*.25))}`:''}</div>`;
     if(!ps.length)h+=`<div class="sub">Sin jugadores registrados.</div>`;
     for(const p of ps){const virt=(+p.virtual||0)>(+p.real||0),mine=can&&(m===o||isAdmin(m));
-      h+=`<div class="pl"><div class="row"><div><div class="pn">${esc(p.nombre)} ${virt?'<span class="tag v">virtual</span>':''}</div><div class="sub">Mister: ${fmt(p.real)}${virt?` · sube ${fmt(p.virtual-p.real)} virtual`:''}</div></div><div class="big">${fmt(eff(p))}</div></div>`;
+      h+=`<div class="pl"><div class="row"><div class="who">${p.misterId?`<img class="ph" alt="" loading="lazy" src="https://cdn-mister.mundodeportivo.com/file/cdn-common/players/${encodeURIComponent(p.misterId)}.png" onerror="this.style.visibility='hidden'">`:''}<div><div class="pn">${esc(p.nombre)} ${virt?'<span class="tag v">virtual</span>':''}</div><div class="sub">${p.valor?`Valor ${fmt(p.valor)} · `:''}Cláusula Mister ${fmt(p.real)}${virt?` · +${fmt(p.virtual-p.real)} virtual`:''}</div></div></div><div class="big">${fmt(eff(p))}</div></div>`;
       if(mine&&!p.misterId)h+=S.edit===p.id?`<div class="grid2"><div><label for="er">Nueva cláusula en Mister</label><input id="er" inputmode="numeric" value="${fmt(p.real)}"></div><div><label>&nbsp;</label><div class="btns" style="margin:0"><button class="btn ok" data-act="saveReal" data-id="${esc(p.id)}">Guardar</button><button class="btn ghost" data-act="cancelEdit">×</button></div></div></div><div class="note">Úsalo cuando la subas gratis en Mister o cambie allí. Si la de Mister supera la virtual, manda la de Mister.</div><div class="btns"><button class="btn bad" data-act="delP" data-id="${esc(p.id)}">Quitar jugador</button></div>`:`<div class="btns" style="margin-top:6px"><button class="btn ghost" data-act="edit" data-id="${esc(p.id)}">Actualizar Mister</button></div>`;
       h+=`</div>`}
     h+=`</section>`}
@@ -114,6 +117,7 @@ function calcSub(){const p=S.players.find(x=>x.id===S.f.pid);if(!p)return null;c
 function vSubir(){const n=needMe();if(n)return n;const m=me(),ps=S.players.filter(p=>p.dueno===m);
   if(!ps.length)return `<div class="card empty">No tienes jugadores registrados. Añádelos en «Plantillas».</div>`;
   if(!ps.some(p=>p.id===S.f.pid))S.f.pid=ps[0].id;
+  const kf=fin(m);if(kf&&S.f.saldo===''&&S.f.valor===''){if(kf.saldo!=null)S.f.saldo=fmt(kf.saldo);if(kf.valor!=null)S.f.valor=fmt(kf.valor)}
   const val=validators({solicitante:m}).map(nm).join(' o ');
   return `<section class="card"><h2>Subir cláusula virtual</h2><label for="sp">Jugador</label><select id="sp" data-f="pid">${ps.map(p=>`<option value="${esc(p.id)}" ${p.id===S.f.pid?'selected':''}>${esc(p.nombre)} · ${fmt(eff(p))}</option>`).join('')}</select>
   <div class="seg"><button type="button" data-mode="objetivo" class="${S.f.mode==='objetivo'?'on':''}">Cláusula objetivo</button><button type="button" data-mode="pago" class="${S.f.mode==='pago'?'on':''}">Lo que pago</button></div>
@@ -130,7 +134,8 @@ function updSub(){const r=calcSub(),c=$('#rc');if(!c||!r)return;c.textContent=fm
 function calcCl(){const p=S.players.find(x=>x.id===S.c.pid);if(!p)return null;const R=+p.real||0,V=eff(p);const max=(S.c.saldo!==''||S.c.valor!=='')?num(S.c.saldo)+Math.round(num(S.c.valor)*.25):null;return{p,R,V,D:V-R,max}}
 function vClausulazo(){const n=needMe();if(n)return n;const m=me(),ps=S.players.filter(p=>p.dueno!==m).sort((a,b)=>a.dueno.localeCompare(b.dueno)||a.nombre.localeCompare(b.nombre));
   if(!ps.length)return `<div class="card empty">No hay jugadores de rivales registrados.</div>`;
-  if(!ps.some(p=>p.id===S.c.pid))S.c.pid=ps[0].id;const r=calcCl(),val=validators({solicitante:m,vendedor:r.p.dueno}).map(nm).join(' o ');
+  if(!ps.some(p=>p.id===S.c.pid))S.c.pid=ps[0].id;
+  const kc=fin(m);if(kc&&S.c.saldo===''&&S.c.valor===''){if(kc.saldo!=null)S.c.saldo=fmt(kc.saldo);if(kc.valor!=null)S.c.valor=fmt(kc.valor)}const r=calcCl(),val=validators({solicitante:m,vendedor:r.p.dueno}).map(nm).join(' o ');
   const okMax=r.max==null||r.V<=r.max;
   return `<section class="card"><h2>Pagar un clausulazo</h2><label for="cp">Jugador rival</label><select id="cp" data-c="pid">${ps.map(p=>`<option value="${esc(p.id)}" ${p.id===S.c.pid?'selected':''}>${esc(p.nombre)} (${esc(nm(p.dueno))}) · ${fmt(eff(p))}</option>`).join('')}</select>
   <div class="res"><div><div class="k">Pagas en Mister</div><div class="n">${fmt(r.R)}</div></div><div><div class="k">Diferencia virtual</div><div class="n ${r.D>0?'cost':''}">${fmt(r.D)}</div></div></div>
