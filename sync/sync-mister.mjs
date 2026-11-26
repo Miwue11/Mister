@@ -95,6 +95,16 @@ function autoMap(managers, saved) {
   return map;
 }
 
+// Solo lee la fecha de caducidad del token (campo exp); el token no se imprime nunca.
+function tokenExpiry() {
+  const t = (COOKIE.match(/(?:^|;\s*)token=([^;]+)/) || [])[1];
+  if (!t) return null;
+  try {
+    const p = JSON.parse(Buffer.from(t.split(".")[1].replace(/-/g, "+").replace(/_/g, "/"), "base64").toString("utf8"));
+    return typeof p.exp === "number" ? p.exp * 1000 : null;
+  } catch { return null; }
+}
+
 async function main() {
   if (!process.env.FIREBASE_SERVICE_ACCOUNT) throw new Error("Falta el secreto FIREBASE_SERVICE_ACCOUNT");
   admin.initializeApp({ credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)) });
@@ -102,6 +112,8 @@ async function main() {
   const estado = db.doc("mister/estado");
   try {
     if (!COOKIE) throw new Error("Falta el secreto MISTER_COOKIE");
+    const exp = tokenExpiry();
+    console.log("La sesión de Mister caduca:", exp ? new Date(exp).toISOString() : "no se sabe (el token no trae fecha)");
     if (COMMUNITY) await getHtml(`/action/change?id_community=${encodeURIComponent(COMMUNITY)}`).catch(() => {});
     const stHtml = await getHtml("/standings");
     const managers = parseStandings(stHtml);
@@ -167,7 +179,7 @@ async function main() {
       if (d.misterId && !seenDocs.has(id) && !pendIds.has(id) && map[d.misterOwner]) { await db.doc("jugadores/" + id).delete(); quitados++; }
     }
     await estado.set({
-      ok: true, fecha: now, ultimaOk: now, error: null,
+      ok: true, fecha: now, ultimaOk: now, error: null, caduca: tokenExpiry(),
       managers, jugadores: found.length, sinDueno, nuevos, cambios, quitados
     });
     console.log(`Hecho: ${nuevos} nuevos, ${cambios} cambios de dueño, ${quitados} quitados, ${sinDueno} de mánagers sin asignar`);
