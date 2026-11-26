@@ -1,0 +1,31 @@
+name: Sincronizar con Mister
+
+on:
+  schedule:
+    - cron: "17 */3 * * *"   # cada 3 horas
+  workflow_dispatch: {}       # botón "Run workflow" para lanzarlo a mano
+
+concurrency:
+  group: sync-mister
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Instalar dependencias
+        working-directory: sync
+        run: npm install --no-audit --no-fund
+      - name: Leer Mister y actualizar Firebase
+        working-directory: sync
+        env:
+          MISTER_COOKIE: ${{ secrets.MISTER_COOKIE }}
+          MISTER_X_AUTH: ${{ secrets.MISTER_X_AUTH }}
+          MISTER_COMMUNITY_ID: ${{ vars.MISTER_COMMUNITY_ID }}
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: node sync-mister.mjs

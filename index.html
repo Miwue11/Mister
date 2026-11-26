@@ -77,7 +77,7 @@ const eff=p=>Math.max(+p.real||0,+p.virtual||0);
 const isAdmin=n=>ADMINS.includes(n);
 const validators=op=>{let v=ADMINS.filter(a=>a!==op.solicitante&&a!==op.vendedor);return v.length?v:ADMINS.filter(a=>a!==op.solicitante)};
 let db=null,uid=null,canWrite=false;
-const S={players:[],ops:[],members:{},ratio:2.5,tab:'plantillas',ready:0,
+const S={players:[],ops:[],members:{},ratio:2.5,mister:null,mapa:{},tab:'plantillas',ready:0,
   f:{pid:'',mode:'objetivo',val:'',saldo:'',valor:''},c:{pid:'',saldo:'',valor:''},edit:null};
 const me=()=>MEMBERS.find(m=>uid&&S.members[m]&&S.members[m].uid===uid)||null;
 const toast=m=>{const t=$('#toast');t.textContent=m;t.style.display='block';clearTimeout(toast.h);toast.h=setTimeout(()=>t.style.display='none',3800)};
@@ -93,14 +93,16 @@ const ownerOpts=(sel,all)=>(all?MEMBERS:[me()]).map(m=>`<option value="${m}" ${m
 function vPlantillas(){
   const m=me(),can=canWrite&&m;
   let h='';
-  if(can)h+=`<form class="card" id="addP"><h2>Añadir jugador</h2><div class="grid2"><div><label for="apn">Jugador</label><input id="apn" required autocomplete="off" placeholder="Angeliño"></div><div><label for="apd">Dueño</label><select id="apd">${ownerOpts(m,isAdmin(m))}</select></div></div><label for="apr">Cláusula actual en Mister</label><input id="apr" inputmode="numeric" required placeholder="1.000.000"><div class="btns"><button class="btn ok">Añadir</button></div></form>`;
+  const synced=S.mister&&S.mister.ultimaOk;
+  if(synced)h+=`<div class="card sub">Los jugadores, dueños y cláusulas se cargan solos desde Mister cada 3 horas. Última lectura: ${when(S.mister.ultimaOk)}.</div>`;
+  if(can&&!synced)h+=`<form class="card" id="addP"><h2>Añadir jugador</h2><div class="grid2"><div><label for="apn">Jugador</label><input id="apn" required autocomplete="off" placeholder="Angeliño"></div><div><label for="apd">Dueño</label><select id="apd">${ownerOpts(m,isAdmin(m))}</select></div></div><label for="apr">Cláusula actual en Mister</label><input id="apr" inputmode="numeric" required placeholder="1.000.000"><div class="btns"><button class="btn ok">Añadir</button></div></form>`;
   for(const o of MEMBERS){
     const ps=S.players.filter(p=>p.dueno===o).sort((a,b)=>eff(b)-eff(a));
     h+=`<section class="card"><div class="row"><h2>${esc(nm(o))} ${isAdmin(o)?'<span class="tag a">admin</span>':''}</h2><span class="sub">${ps.length} jugador${ps.length===1?'':'es'}</span></div>`;
     if(!ps.length)h+=`<div class="sub">Sin jugadores registrados.</div>`;
     for(const p of ps){const virt=(+p.virtual||0)>(+p.real||0),mine=can&&(m===o||isAdmin(m));
       h+=`<div class="pl"><div class="row"><div><div class="pn">${esc(p.nombre)} ${virt?'<span class="tag v">virtual</span>':''}</div><div class="sub">Mister: ${fmt(p.real)}${virt?` · sube ${fmt(p.virtual-p.real)} virtual`:''}</div></div><div class="big">${fmt(eff(p))}</div></div>`;
-      if(mine)h+=S.edit===p.id?`<div class="grid2"><div><label for="er">Nueva cláusula en Mister</label><input id="er" inputmode="numeric" value="${fmt(p.real)}"></div><div><label>&nbsp;</label><div class="btns" style="margin:0"><button class="btn ok" data-act="saveReal" data-id="${esc(p.id)}">Guardar</button><button class="btn ghost" data-act="cancelEdit">×</button></div></div></div><div class="note">Úsalo cuando la subas gratis en Mister o cambie allí. Si la de Mister supera la virtual, manda la de Mister.</div><div class="btns"><button class="btn bad" data-act="delP" data-id="${esc(p.id)}">Quitar jugador</button></div>`:`<div class="btns" style="margin-top:6px"><button class="btn ghost" data-act="edit" data-id="${esc(p.id)}">Actualizar Mister</button></div>`;
+      if(mine&&!p.misterId)h+=S.edit===p.id?`<div class="grid2"><div><label for="er">Nueva cláusula en Mister</label><input id="er" inputmode="numeric" value="${fmt(p.real)}"></div><div><label>&nbsp;</label><div class="btns" style="margin:0"><button class="btn ok" data-act="saveReal" data-id="${esc(p.id)}">Guardar</button><button class="btn ghost" data-act="cancelEdit">×</button></div></div></div><div class="note">Úsalo cuando la subas gratis en Mister o cambie allí. Si la de Mister supera la virtual, manda la de Mister.</div><div class="btns"><button class="btn bad" data-act="delP" data-id="${esc(p.id)}">Quitar jugador</button></div>`:`<div class="btns" style="margin-top:6px"><button class="btn ghost" data-act="edit" data-id="${esc(p.id)}">Actualizar Mister</button></div>`;
       h+=`</div>`}
     h+=`</section>`}
   return h}
@@ -143,7 +145,7 @@ const when=t=>t?new Date(t).toLocaleString('es-ES',{day:'numeric',month:'short',
 function vPendientes(){const ps=pend().sort((a,b)=>a.creado-b.creado),m=me();if(!ps.length)return `<div class="card empty">Nada pendiente de validar.</div>`;
   return ps.map(o=>{const v=validators(o),canV=canWrite&&m&&v.includes(m),mine=canWrite&&m===o.solicitante;
     return `<section class="card"><div class="row"><span class="tag ${o.tipo==='subida'?'v':'a'}">${o.tipo==='subida'?'Subida':'Clausulazo'}</span><span class="sub">${when(o.creado)}</span></div><p>${opText(o)}</p><div class="sub">Valida: ${esc(v.map(nm).join(' o '))}</div>
-    ${canV&&o.tipo==='clausulazo'?`<label for="nr-${esc(o.id)}">Nueva cláusula del jugador en Mister tras el traspaso</label><input id="nr-${esc(o.id)}" inputmode="numeric" placeholder="La que marque Mister">`:''}
+    ${canV&&o.tipo==='clausulazo'?`<label for="nr-${esc(o.id)}">Nueva cláusula en Mister tras el traspaso${S.mister&&S.mister.ultimaOk?' (opcional: se actualiza sola)':''}</label><input id="nr-${esc(o.id)}" inputmode="numeric" placeholder="La que marque Mister">`:''}
     <div class="btns">${canV?`<button class="btn ok" data-act="val" data-id="${esc(o.id)}">${o.tipo==='subida'?'Dinero quitado · Validar':'Hecho · Validar'}</button><button class="btn bad" data-act="rej" data-id="${esc(o.id)}">Rechazar</button>`:''}${mine?`<button class="btn ghost" data-act="can" data-id="${esc(o.id)}">Cancelar</button>`:''}</div></section>`}).join('')}
 
 function vHistorial(){const done=S.ops.filter(o=>o.estado!=='pendiente').sort((a,b)=>(b.resuelto||0)-(a.resuelto||0)),ok=done.filter(o=>o.estado==='validada');
@@ -154,6 +156,13 @@ function vHistorial(){const done=S.ops.filter(o=>o.estado!=='pendiente').sort((a
 function vLiga(){const m=me(),adm=canWrite&&isAdmin(m);
   let h=`<section class="card"><h2>¿Quién eres?</h2>${!uid?'<div class="sub">Conectando…</div>':''}${MEMBERS.map(x=>{const l=S.members[x]&&S.members[x].uid,mine=l&&l===uid;
     return `<div class="pl row"><div class="pn">${esc(nm(x))} ${isAdmin(x)?'<span class="tag a">admin</span>':''}</div><div>${mine?'<span class="tag v">eres tú</span> <button class="btn ghost" data-act="unlink" data-n="'+x+'">Desvincular</button>':l?(adm?'<button class="btn ghost" data-act="unlink" data-n="'+x+'">Desvincular</button>':'<span class="sub">vinculado</span>'):(canWrite&&uid&&!m?'<button class="btn ok" data-act="claim" data-n="'+x+'">Soy yo</button>':'<span class="sub">libre</span>')}</div></div>`}).join('')}<div class="note">Cada móvil se vincula a un mánager. Si cambias de móvil o navegador, pide a un admin que te desvincule y vuelve a pulsar «Soy yo».</div></section>`;
+  const st=S.mister;let ms;
+  if(!st)ms='<div class="sub">Todavía no está conectada. Se configura una vez desde GitHub.</div>';
+  else if(st.ok)ms=`<div class="sub">Última lectura: ${when(st.fecha)} · ${fmt(st.jugadores)} jugadores con dueño${st.sinDueno?` · ${fmt(st.sinDueno)} de mánagers sin asignar`:''}.</div>`;
+  else ms=`<div class="sub err">No se puede leer Mister desde ${when(st.fecha)}: ${esc(st.error)}. ${/SESION/.test(st.error||'')?'Hay que renovar la cookie de Mister en GitHub. ':''}Última lectura buena: ${st.ultimaOk?when(st.ultimaOk):'nunca'}.</div>`;
+  const mg=(st&&st.managers)||[];
+  if(mg.length)ms+=`<label>Quién es quién en Mister</label>`+mg.map(x=>`<div class="pl row"><div>${esc(x.name)}</div><div>${adm?`<select data-mapa="${esc(x.id)}" style="width:auto"><option value="">Sin asignar</option>${MEMBERS.map(n=>`<option value="${n}" ${S.mapa[x.id]===n?'selected':''}>${esc(nm(n))}</option>`).join('')}</select>`:`<span class="sub">${S.mapa[x.id]?esc(nm(S.mapa[x.id])):'sin asignar'}</span>`}</div></div>`).join('');
+  h+=`<section class="card"><h2>Conexión con Mister</h2>${ms}</section>`;
   h+=`<section class="card"><h2>Regla de cálculo</h2><div class="sub">Cada 1 € pagado sube la cláusula ${String(S.ratio).replace('.',',')} €. Sale de Mister: pagar 133.333 sube 1.000.000 a 1.333.333.</div>${adm?`<label for="rt2">Euros de cláusula por euro pagado</label><div class="grid2"><input id="rt2" inputmode="decimal" value="${String(S.ratio).replace('.',',')}"><button class="btn ghost" data-act="ratio">Guardar</button></div>`:''}</section>`;return h}
 
 function render(){renderWho();renderTabs();const v={plantillas:vPlantillas,subir:vSubir,clausulazo:vClausulazo,pendientes:vPendientes,historial:vHistorial,liga:vLiga}[S.tab];
@@ -182,8 +191,8 @@ document.addEventListener('click',async e=>{const b=e.target.closest('button');i
         const p=s.data();
         if(o.tipo==='subida'){if(p.dueno!==o.solicitante||eff(p)!==o.desde){toast('La cláusula o el dueño han cambiado desde la petición: recházala y que la pidan otra vez');b.disabled=false;return}
           await db.doc('jugadores/'+o.jugadorId).update({virtual:o.hasta,act:Date.now()})}
-        else{if(p.dueno!==o.vendedor){toast('El jugador ya no es de '+nm(o.vendedor)+': recházala');b.disabled=false;return}
-          const nr=num(($('#nr-'+CSS.escape(id))||{}).value)||o.real;await db.doc('jugadores/'+o.jugadorId).update({dueno:o.solicitante,real:nr,virtual:0,act:Date.now()})}
+        else{if(p.dueno!==o.vendedor&&p.dueno!==o.solicitante){toast('El jugador ya no es de '+nm(o.vendedor)+': recházala');b.disabled=false;return}
+          const nr=num(($('#nr-'+CSS.escape(id))||{}).value)||(p.dueno===o.solicitante?+p.real:o.real);await db.doc('jugadores/'+o.jugadorId).update({dueno:o.solicitante,real:nr,virtual:0,act:Date.now()})}
         await ref.update({estado:'validada',validador:m,resuelto:Date.now()});toast('Validado')}
       if(a==='rej'&&validators(o).includes(m)){await ref.update({estado:'rechazada',validador:m,resuelto:Date.now()});toast('Rechazado')}
       if(a==='can'&&o.solicitante===m){await ref.update({estado:'cancelada',resuelto:Date.now()});toast('Cancelado')}}
@@ -202,7 +211,9 @@ document.addEventListener('submit',async e=>{if(e.target.id!=='addP')return;e.pr
 document.addEventListener('input',e=>{const t=e.target;
   if(t.dataset.f){S.f[t.dataset.f]=t.value;if(t.dataset.f==='pid'){S.f.val=''}if(S.tab==='subir'){if(t.dataset.f==='pid')render();else updSub()}}
   if(t.dataset.c){S.c[t.dataset.c]=t.value;if(t.dataset.c==='pid')render()}});
-document.addEventListener('change',e=>{const t=e.target;if(t.dataset.c&&t.dataset.c!=='pid')render();
+document.addEventListener('change',async e=>{const t=e.target;
+  if(t.dataset.mapa!==undefined){if(!db||!isAdmin(me()))return;const m={...S.mapa};if(t.value)m[t.dataset.mapa]=t.value;else delete m[t.dataset.mapa];
+    try{await db.doc('mister/mapa').set({mapa:m});toast('Guardado. Se aplica en la próxima lectura de Mister')}catch(err){fail(err)}return}if(t.dataset.c&&t.dataset.c!=='pid')render();
   if(t.inputMode==='numeric'&&t.tagName==='INPUT'&&t.value.trim()){const v=num(t.value);t.value=fmt(v);if(t.dataset.f)S.f[t.dataset.f]=t.value;if(t.dataset.c)S.c[t.dataset.c]=t.value}});
 
 render();
@@ -215,6 +226,8 @@ window.startApp=(fdb,id)=>{
   db.collection('jugadores').onSnapshot(s=>{S.players=s.docs.map(d=>({id:d.id,...d.data()}));if(!a++)got();render()},err);
   db.collection('operaciones').orderBy('creado','desc').limit(400).onSnapshot(s=>{S.ops=s.docs.map(d=>({id:d.id,...d.data()}));if(!b++)got();render()},err);
   db.collection('miembros').onSnapshot(s=>{S.members={};s.docs.forEach(d=>S.members[d.id]=d.data());if(!c++)got();if(!me()&&canWrite&&S.tab==='plantillas'&&S.ready>=3)S.tab='liga';render()},err);
+  db.doc('mister/estado').onSnapshot(s=>{S.mister=s.exists?s.data():null;render()},()=>{});
+  db.doc('mister/mapa').onSnapshot(s=>{S.mapa=(s.exists&&s.data().mapa)||{};render()},()=>{});
   db.doc('liga/config').onSnapshot(s=>{if(s.exists&&+s.data().ratio>0)S.ratio=+s.data().ratio;render()},()=>{});
 };
 window.appStatus=t=>{$('#status').textContent=t;$('#who').textContent='Sin conexión'};
