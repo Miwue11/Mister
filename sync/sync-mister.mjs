@@ -122,7 +122,8 @@ async function main() {
     // El nombre de la propia cuenta a veces no viene en su fila: se toma de _FG_user.
     const me = stHtml.match(/_FG_user\s*=\s*\{[\s\S]{0,3000}?["']?id["']?\s*:\s*["']?(\d+)[\s\S]{0,3000}?["']?name["']?\s*:\s*["']([^"']+)["']/);
     for (const m of managers) if (/^Manager \d+$/.test(m.name) && me && me[1] === m.id) m.name = me[2];
-    const meId = me ? me[1] : null;
+    const ucm = stHtml.match(/_FG_user\s*=\s*\{[\s\S]{0,20000}?["']?id_uc["']?\s*:\s*["']?(\d+)/);
+    const meId = ucm ? ucm[1] : (me ? me[1] : null);
     let saldo = null;
     try {
       const b = await ajax("/ajax/balance");
@@ -156,12 +157,14 @@ async function main() {
 
     const found = [];
     for (const p of owned) {
-      const c = await clauseOf(p.id).catch(e => { console.warn(`cláusula ${p.id}: ${e.message}`); return { clause: null, owner: null }; });
+      // El listado ya trae la cláusula; solo se pregunta jugador a jugador si falta.
+      const c = Number(p.clause) > 0 ? { clause: Math.round(+p.clause), owner: String(p.id_uc) }
+        : await clauseOf(p.id).catch(e => { console.warn(`cláusula ${p.id}: ${e.message}`); return { clause: null, owner: null }; });
       const owner = c.owner && ids.has(c.owner) ? c.owner : String(p.id_uc);
       const foto = String(p.photoUrl || p.photo_url || p.photo || "").trim();
       found.push({ id: String(p.id), nombre: String(p.name || "").trim(), owner, clause: c.clause, valor: Number(p.value) || 0,
         foto: /^https:\/\//.test(foto) ? foto : `https://cdn-mister.mundodeportivo.com/file/cdn-common/players/${p.id}.png` });
-      await sleep(350);
+      if (!(Number(p.clause) > 0)) await sleep(350);
     }
 
     const jSnap = await db.collection("jugadores").get();
