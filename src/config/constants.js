@@ -1,6 +1,6 @@
 // Datos fijos de la liga. Cambiar aquí si entra o sale alguien.
 export const MEMBERS = ["Miguel", "Agustin", "Jaime", "Carlos", "David"];
-export const ADMINS = ["Agustin", "David"];
+export const ADMINS = ["Miguel", "Agustin", "David"];
 
 // Mister: cada 1 € pagado sube la cláusula 2,5 € (sale de las capturas del juego).
 export const DEFAULT_RATIO = 2.5;

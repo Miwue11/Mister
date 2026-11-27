@@ -1,4 +1,4 @@
-// Aviso para Agustín y David cuando tienen operaciones que validar.
+// Aviso para los admins cuando tienen operaciones que validar.
 import { isAdmin, validatorsFor } from "../lib/clauses.js";
 import { useLiga } from "../state/LigaProvider.jsx";
 
