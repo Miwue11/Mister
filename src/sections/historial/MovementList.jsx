@@ -11,7 +11,10 @@ export function MovementList({ done }) {
       {done.slice(0, MAX_SHOWN).map(o => (
         <div className="pl" key={o.id}>
           <div className="row">
-            <span className={`tag ${o.estado === "validada" ? "v" : ""}`}>{o.estado}</span>
+            <span>
+              <span className={`tag ${o.estado === "validada" ? "v" : ""}`}>{o.estado}</span>
+              {o.estado === "validada" && o.validador === o.solicitante && <> <span className="tag a">autovalidada</span></>}
+            </span>
             <span className="sub">{formatWhen(o.resuelto)}{o.validador ? ` · ${displayName(o.validador)}` : ""}</span>
           </div>
           <OperationText op={o} />

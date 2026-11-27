@@ -1,5 +1,5 @@
 // Reglas de cláusulas, subidas y clausulazos. Funciones puras, sin red.
-import { ADMINS, DEBT_FRACTION } from "../config/constants.js";
+import { ADMINS, DEBT_FRACTION, SELF_VALIDATORS } from "../config/constants.js";
 
 export const realClause = p => +p.real || 0;
 export const virtualClause = p => +p.virtual || 0;
@@ -9,10 +9,13 @@ export const isAdmin = name => ADMINS.includes(name);
 
 export const maxBid = (saldo, valorEquipo) => Math.round((+saldo || 0) + (+valorEquipo || 0) * DEBT_FRACTION);
 
-// Admins que pueden validar: nunca quien la pide; en clausulazos, tampoco el vendedor si hay otro.
+const canSelfValidate = name => ADMINS.includes(name) && SELF_VALIDATORS.includes(name);
+
+// Admins que pueden validar: no quien la pide (salvo SELF_VALIDATORS); en clausulazos, tampoco el vendedor si hay otro.
 export function validatorsFor(op) {
   const strict = ADMINS.filter(a => a !== op.solicitante && a !== op.vendedor);
-  return strict.length ? strict : ADMINS.filter(a => a !== op.solicitante);
+  const base = strict.length ? strict : ADMINS.filter(a => a !== op.solicitante);
+  return canSelfValidate(op.solicitante) ? [...base, op.solicitante] : base;
 }
 
 // mode "objetivo": amount = cláusula final; mode "pago": amount = dinero a invertir.
